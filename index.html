@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Deadlands Kanty - Statystyki</title>
+    <title>Project Kant 2.0</title>
     <link rel="icon" type="image/x-icon" href="star.ico">
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
@@ -12,80 +12,114 @@
     <div class="container">
         <!-- Nagłówek -->
         <header>
-            <h1>⚡ Statystyki Kantów - Deadlands</h1>
+            <h1>Project Kant 2.0</h1>
             <p>Baza danych zaklęć i sztuczek z systemu Deadlands</p>
         </header>
 
-        <!-- Panel sterowania -->
-        <div class="controls-panel">
-            <!-- Wyszukiwanie -->
-            <div class="search-box">
-                <input 
-                    type="text" 
-                    id="searchInput" 
-                    placeholder="Szukaj po angielskiej lub polskiej nazwie..."
-                    class="search-input"
-                >
-                <span class="search-icon">🔍</span>
+        <!-- Nawigacja zakładek -->
+        <div class="tabs-navigation">
+            <button class="tab-btn active" data-tab="card-view">🎴 Widok Karciany</button>
+            <button class="tab-btn" data-tab="table-view">📋 Tabela</button>
+        </div>
+
+        <!-- Widok Karciany -->
+        <div id="card-view" class="view-section active">
+            <!-- Omnibox Search -->
+            <div class="omnibox-container card-search-container">
+                <div class="search-box card-search-box">
+                    <input 
+                        type="text" 
+                        id="cardSearchInput" 
+                        placeholder="🔍 Szukaj kanta..."
+                        class="search-input"
+                        autocomplete="off"
+                    >
+                </div>
+                <div class="omnibox-suggestions" id="omniboxSuggestions"></div>
             </div>
 
-            <!-- Filtry -->
-            <div class="filters">
-                <div class="filter-group">
-                    <label for="typeFilter">Typ:</label>
-                    <select id="typeFilter" class="filter-select">
-                        <option value="">Wszystkie</option>
-                        <option value="kant">Kanty</option>
-                        <option value="sztuka">Sztuczki</option>
-                    </select>
+            <!-- Karciany widok - pojedyncza karta -->
+            <div class="card-display-container">
+                <div class="game-card" id="gameCard">
+                    <div class="loading-card">Ładowanie danych...</div>
                 </div>
 
-                <div class="filter-group">
-                    <label for="sourceFilter">Źródło:</label>
-                    <select id="sourceFilter" class="filter-select">
-                        <option value="">Wszystkie źródła</option>
-                    </select>
-                </div>
 
-                <div class="filter-group">
-                    <label for="featureFilter">Cecha:</label>
-                    <select id="featureFilter" class="filter-select">
-                        <option value="">Wszystkie cechy</option>
-                    </select>
-                </div>
-
-                <button id="resetFilters" class="btn-reset">⟲ Reset filtry</button>
             </div>
         </div>
 
-        <!-- Licznik wyników -->
-        <div class="results-info">
-            <p id="resultsCount">Ładowanie danych...</p>
-        </div>
+        <!-- Widok Tabelaryczny -->
+        <div id="table-view" class="view-section">
+            <div class="controls-panel">
+                <!-- Wyszukiwanie -->
+                <div class="search-box">
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        placeholder="Szukaj po angielskiej lub polskiej nazwie..."
+                        class="search-input"
+                    >
+                    <span class="search-icon">🔍</span>
+                </div>
 
-        <!-- Tabela kantów -->
-        <div class="table-wrapper">
-            <table id="spellsTable" class="spells-table">
-                <thead>
-                    <tr>
-                        <th class="expand-col">▼</th>
-                        <th>Nazwa (PL)</th>
-                        <th>Nazwa (EN)</th>
-                        <th>Typ</th>
-                        <th>Źródło</th>
-                        <th>Cecha</th>
-                        <th>Min. Ręka</th>
-                        <th>Czas przygotowania</th>
-                        <th>Czas działania</th>
-                        <th>Zasięg</th>
-                    </tr>
-                </thead>
-                <tbody id="spellsBody">
-                    <tr class="loading-row">
-                        <td colspan="10">Ładowanie danych...</td>
-                    </tr>
-                </tbody>
-            </table>
+                <!-- Filtry -->
+                <div class="filters">
+                    <div class="filter-group">
+                        <label for="typeFilter">Typ:</label>
+                        <select id="typeFilter" class="filter-select">
+                            <option value="">Wszystkie</option>
+                            <option value="kant">Kanty</option>
+                            <option value="sztuka">Sztuczki</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="sourceFilter">Źródło:</label>
+                        <select id="sourceFilter" class="filter-select">
+                            <option value="">Wszystkie źródła</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="featureFilter">Cecha:</label>
+                        <select id="featureFilter" class="filter-select">
+                            <option value="">Wszystkie cechy</option>
+                        </select>
+                    </div>
+
+                    <button id="resetFilters" class="btn-reset">⟲ Reset filtry</button>
+                </div>
+            </div>
+
+            <!-- Licznik wyników -->
+            <div class="results-info">
+                <p id="resultsCount">Ładowanie danych...</p>
+            </div>
+
+            <!-- Tabela kantów -->
+            <div class="table-wrapper">
+                <table id="spellsTable" class="spells-table">
+                    <thead>
+                        <tr>
+                            <th class="expand-col">▼</th>
+                            <th class="sortable sort-asc" data-sort="NazwaPL">Nazwa (PL)</th>
+                            <th class="sortable" data-sort="Nazwa">Nazwa (EN)</th>
+                            <th class="sortable" data-sort="type">Typ</th>
+                            <th class="sortable" data-sort="Źródło">Źródło</th>
+                            <th class="sortable" data-sort="Cecha">Cecha</th>
+                            <th class="sortable" data-sort="Min. Ręka">Min. Ręka</th>
+                            <th class="sortable" data-sort="Rzucanie">Czas przygotowania</th>
+                            <th class="sortable" data-sort="Czas">Czas działania</th>
+                            <th class="sortable" data-sort="Zasięg">Zasięg</th>
+                        </tr>
+                    </thead>
+                    <tbody id="spellsBody">
+                        <tr class="loading-row">
+                            <td colspan="10">Ładowanie danych...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <!-- Details modal -->
