@@ -1,0 +1,29 @@
+{
+  "name": "project-kant",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Grobarch/Project-Kant.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/Grobarch/Project-Kant/issues"
+  },
+  "homepage": "https://github.com/Grobarch/Project-Kant#readme",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.98.0"
+  },
+  "devDependencies": {
+    "vite": "^7.3.1"
+  }
+}

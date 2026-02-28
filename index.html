@@ -12,8 +12,19 @@
     <div class="container">
         <!-- Nagłówek -->
         <header>
-            <h1>Project Kant 2.0</h1>
-            <p>Baza danych zaklęć i sztuczek z systemu Deadlands</p>
+            <div class="header-top">
+                <div class="header-title">
+                    <h1>Project Kant 2.0</h1>
+                    <p>Baza danych zaklęć i sztuczek z systemu Deadlands</p>
+                </div>
+                <div class="header-auth">
+                    <button id="loginBtn" class="auth-btn">Zaloguj się</button>
+                    <span id="userInfo" class="user-info" style="display: none;">
+                        <span id="userName"></span>
+                        <button id="logoutBtn" class="auth-btn logout">Wyloguj się</button>
+                    </span>
+                </div>
+            </div>
         </header>
 
         <!-- Nawigacja zakładek -->
@@ -131,6 +142,27 @@
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span id="closeLoginModal" class="close">&times;</span>
+            <h2>Zaloguj się</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Hasło:</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button type="submit" class="submit-btn">Zaloguj</button>
+                <div id="loginError" class="error-message" style="display: none;"></div>
+                <div id="loginSuccess" class="success-message" style="display: none;"></div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
 </body>
 </html>

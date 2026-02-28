@@ -1,7 +1,13 @@
+// Import Supabase client and auth functions
+import { supabase, signIn, signOut, getCurrentUser, getKnownSpells, addKnownSpell, removeKnownSpell, createSpellbook, getSpellbooks, addSpellToSpellbook, getSpellbookSpells, createCustomSpell, getCustomSpells } from './supabase.js';
+
 // Data storage
 let allSpells = [];
 let filteredSpells = [];
 let filteredCardsSpells = [];
+
+// User state
+let currentUser = null;
 
 // Sorting state
 let currentSortColumn = 'NazwaPL';
@@ -35,7 +41,7 @@ const viewSections = document.querySelectorAll('.view-section');
 const HAND_NAMES = ['As', 'Para', 'Para Figur', 'Dwie Pary', 'Trójka', 'Strit', 'Kolor', 'Ful', 'Kareta', 'Poker', 'Królewski Poker'];
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     // Check if Papa Parse is loaded
     if (typeof Papa === 'undefined') {
         console.error('Papa Parse nie załadowany!');
@@ -43,12 +49,46 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
     
+    await checkUserOnLoad();
     loadData();
     setupEventListeners();
 });
 
 // Setup event listeners
 function setupEventListeners() {
+    // Auth UI
+    const loginBtn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const loginModal = document.getElementById('loginModal');
+    const closeLoginModal = document.getElementById('closeLoginModal');
+    const loginForm = document.getElementById('loginForm');
+
+    if (loginBtn) {
+        loginBtn.addEventListener('click', () => {
+            loginModal.style.display = 'block';
+        });
+    }
+
+    if (closeLoginModal) {
+        closeLoginModal.addEventListener('click', () => {
+            loginModal.style.display = 'none';
+        });
+    }
+
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+    }
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', handleLogout);
+    }
+
+    window.addEventListener('click', (event) => {
+        if (event.target === loginModal) {
+            loginModal.style.display = 'none';
+        }
+    });
+
     // Table view filters
     searchInput.addEventListener('input', applyFilters);
     typeFilter.addEventListener('change', applyFilters);
@@ -574,5 +614,91 @@ function switchTab(tabName) {
         setTimeout(() => {
             cardSearchInput.focus();
         }, 100);
+    }
+}
+// Authentication functions
+async function checkUserOnLoad() {
+    try {
+        const user = await getCurrentUser();
+        if (user) {
+            currentUser = user;
+            updateAuthUI(user);
+        }
+    } catch (error) {
+        console.error('Błąd sprawdzania użytkownika:', error);
+    }
+}
+
+async function handleLogin(e) {
+    e.preventDefault();
+    
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const errorDiv = document.getElementById('loginError');
+    const successDiv = document.getElementById('loginSuccess');
+    
+    errorDiv.style.display = 'none';
+    successDiv.style.display = 'none';
+    
+    if (!email || !password) {
+        errorDiv.textContent = 'Podaj email i hasło';
+        errorDiv.style.display = 'block';
+        return;
+    }
+    
+    try {
+        const { data, error } = await signIn(email, password);
+        
+        if (error) {
+            errorDiv.textContent = error.message || 'Błąd logowania';
+            errorDiv.style.display = 'block';
+            return;
+        }
+        
+        if (data.user) {
+            currentUser = data.user;
+            successDiv.textContent = 'Zalogowano pomyślnie!';
+            successDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                document.getElementById('loginModal').style.display = 'none';
+                document.getElementById('loginForm').reset();
+                updateAuthUI(currentUser);
+            }, 1500);
+        }
+    } catch (error) {
+        errorDiv.textContent = 'Błąd serwera: ' + error.message;
+        errorDiv.style.display = 'block';
+    }
+}
+
+async function handleLogout() {
+    try {
+        const { error } = await signOut();
+        
+        if (error) {
+            console.error('Błąd wylogowania:', error);
+            return;
+        }
+        
+        currentUser = null;
+        updateAuthUI(null);
+    } catch (error) {
+        console.error('Błąd wylogowania:', error);
+    }
+}
+
+function updateAuthUI(user) {
+    const loginBtn = document.getElementById('loginBtn');
+    const userInfo = document.getElementById('userInfo');
+    const userName = document.getElementById('userName');
+    
+    if (user) {
+        loginBtn.style.display = 'none';
+        userInfo.style.display = 'flex';
+        userName.textContent = user.email;
+    } else {
+        loginBtn.style.display = 'block';
+        userInfo.style.display = 'none';
     }
 }
