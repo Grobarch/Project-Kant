@@ -301,7 +301,7 @@ function renderSpells() {
             </td>
             <td>${spell.NazwaPL || '-'}</td>
             <td>${spell.Nazwa || '-'}</td>
-            <td><span class="type-badge ${spell.type}">${spell.type === 'kant' ? 'KANT' : 'SZTUKA'}</span></td>
+            <td><span class="type-badge ${spell.type}">${spell.type === 'kant' ? 'KANT' : 'SZTUCZKA'}</span></td>
             <td>${spell.Źródło || '-'}</td>
             <td>${spell.Cecha || '-'}</td>
             <td>${spell['Min. Ręka'] || '-'}</td>
@@ -418,7 +418,7 @@ function handleOmniboxInput(e) {
 
     omniboxSuggestions.innerHTML = suggestions.map((spell, index) => `
         <div class="omnibox-item" data-index="${index}">
-            <span class="omnibox-item-type">${spell.type === 'kant' ? 'KANT' : 'GR'}</span>
+            <span class="omnibox-item-type">${spell.type === 'kant' ? 'KANT' : 'SZTUCZKA'}</span>
             <div class="omnibox-item-content">
                 <div class="omnibox-item-name">${spell.NazwaPL || spell.Nazwa}</div>
                 <div class="omnibox-item-subtitle">${spell.Nazwa || spell.NazwaPL}</div>
@@ -463,7 +463,7 @@ function renderCard() {
     }
 
     const spell = allCardsForView[currentCardIndex];
-    const typeLabel = spell.type === 'kant' ? 'KANT' : 'SZTUKA';
+    const typeLabel = spell.type === 'kant' ? 'KANT' : 'SZTUCZKA';
     const typeBgClass = spell.type === 'kant' ? 'kant' : 'sztuka';
 
     let html = `
@@ -503,9 +503,11 @@ function renderCard() {
         </div>
 
         <div class="card-description">${spell.Opis || 'Brak opisu'}</div>
-        ${spell.type === 'kant' ? '<button class="btn-show-effects" id="showEffectsBtn">Zobacz Efekty</button>' : ''}
 
-        <span class="card-type-badge type-badge ${typeBgClass}">${typeLabel}</span>
+        <div class="card-footer">
+            ${spell.type === 'kant' ? '<button class="btn-show-effects" id="showEffectsBtn">Zobacz Efekty</button>' : ''}
+            <span class="card-type-badge type-badge ${typeBgClass}">${typeLabel}</span>
+        </div>
     `;
 
     gameCard.innerHTML = html;

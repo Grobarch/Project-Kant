@@ -285,8 +285,7 @@ header p {
 }
 
 .btn-show-effects {
-    margin-top: 15px;
-    margin-bottom: 45px;
+    margin: 0;
     padding: 8px 16px;
     background: rgba(62, 39, 35, 0.8);
     border: 2px solid var(--accent-color);
@@ -697,15 +696,21 @@ header p {
 }
 
 .card-type-badge {
-    position: absolute;
-    bottom: 15px;
-    right: 15px;
     padding: 6px 12px;
     border-radius: 4px;
     font-size: 0.75em;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
 }
 
 
