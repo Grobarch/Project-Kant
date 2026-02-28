@@ -1,0 +1,37 @@
+Źródło,Nazwa,NazwaPL,Cecha,Opis
+Metal Mage,Brace,Wzmocnienie,Duch,"Przytrzymuje niematerialny przedmiot w miejscu. Aby go ruszyć, należy pokonać Kanciarza w spornym teście Siły."
+Metal Mage,Debug,Debugowanie,Wiedza,Zwiększa Niezawodność maszyny o 2. Efekt trwa godzinę lub do następnego użycia.
+Metal Mage,Stabilise,Ustabilizowanie,Spryt,Stabilizuje wybuchową lub łatwopalną substancję chemiczną (mniejsza szansa na eksplozję). Zmniejsza obrażenia z eksplozji o 1 typ kostki. Działa przez czas trwania koncentracji.
+Metal Mage,Tool,Narzędzie,Wiedza,"Tworzy proste narzędzie (np. młotek), jeśli Kanciarz ma pod ręką materiał z jakiego to narzędzie jest zrobione (zazwyczaj metal, czasem drewno)."
+Podstawka,Bandage,Opatrunek,Spryt,Zatrzymuje krwawienie.
+Podstawka,Bar,Sztaba,Spryt,"Utrudnia otwarcie pobliskich drzwi (-5 do testów Siły). Zasięg 3 jardy, wymaga koncentracji."
+Podstawka,Beggar's Banquet,Uczta Żebracza,Spryt,"Ukrywa przykry smak jedzenia, ewentualnie smak trucizny lub narkotyku."
+Podstawka,Calling Card,Znaczenie,Spryt,"Zmienia obrazek na karcie do gry tak, że zmianę zauważą tylko Kanciarze. Nie da się umieścić na karcie tekstu ani innej wiadomości."
+Podstawka,Coffin Varnish,Lura,Duch,"Zmienia kubek dowolnej nie-trującej, nie-magicznej cieczy w BARDZO mocną kawę o paskudnym smaku (+4 do testów Wigoru by nie zasnąć, natychmiastowe wytrzeźwienie kosztem 1k6 godzin kaca, -1 do wszystkich testów przez ten czas). Kawa zachowuje swoją „moc” przez 10 minut."
+Podstawka,Compass,Busola,Spostrzegawczość,"Kanciarz przez moment wie dokładnie, w którym kierunku jest północ."
+Podstawka,Copy,Kopia,Wiedza,"Jeśli Kanciarz ma pod ręką papier, pozwala stworzyć natychmiast kopię jednej strony tekstu, mapy etc. Kopia reprodukuje treść, ale jest zbyt niedokładna, by pomylono ją z oryginałem."
+Podstawka,Divinin' Rod,Wahadełko,Spostrzegawczość,"Znajduje najbliższe źródło wody, jeśli jego odległość w jardach jest mniejsza niż typ kości Cognition pomnożony przez 5. Woda zostaje magicznie przeniesiona do przygotowanego pustego pojemnika, a z braku pojemnika wycieka na powierzchnię ziemi (w ilości około litra)."
+Podstawka,Envision,Wgląd,Spostrzegawczość,"Pozwala widzieć przez cienki, nieprzezroczysty materiał jak karta do gry czy kieszeń. W razie użycia do gry w karty daje +5 do testu Gamblin' przy jednym rozdaniu. Efekt działa 1 rundę, ma zasięg równy typowi kości Cognition."
+Podstawka,False Face,Maska,Spryt,"Zmienia drobne szczegóły wyglądu Kanciarza (zarost, kształt nosa), dając +2 do Disguise. Efekt trwa 5 minut."
+Hexarcana,Finish,Zakończenie,Charyzma,"Sprawia, że przedmiot wygląda jak nowy."
+Podstawka,Flare,Flara,Wiedza,Na czas koncentracji zwiększa jasność i rozmiar ognia o 50%. Zasięg to typ kości Spirit.
+Podstawka,Flicker,Ściema,Wiedza,"Przygasza światło w promieniu równym typowi kości Ducha, dając wszystkim -1do testów Cognition opartych o wzrok."
+Hexarcana,Fooled You!,Wykiwałem Cię!,Spryt,"Stwarza niedużą, dwuwymiarową iluzję (na przykład rozmiaru twarzy na portrecie na liście gończym). Czas trwania: koncentracja."
+Podstawka,Forecast,Prognoza,Spostrzegawczość,Pozwala przewidzieć pogodę w ciągu najbliższych kilku godzin.
+Podstawka,Groom,Służący,Spryt,Oczyszcza ubranie i włosy Kanciarza.
+Podstawka,Guesstimate,Szacunek,Spostrzegawczość,Określa PT testu.
+Podstawka,Hesitate,Zawahanie,Charyzma,Zmniejsza wartość jednej posiadanej przez przeciwnika Karty Akcji o 1 (np. Walet z Damy).
+Podstawka,Ignite,Przypalenie,Duch,Podpala łatwopalny materiał.
+Podstawka,Likker Up,Spicie,Duch,Ofiara ma -4 do testów Ducha by oprzeć się pokusie napicia się. Efekt trwa godzinę.
+Hexarcana,Mirror,Lustro,Wiedza,"Tworzy nieduży obiekt działający jak lustro. Jest on niematerialny, Kanciarz może go przesuwać siłą woli (kosztem jednej Akcji)."
+Podstawka,Palm,Garść,Spryt,Przenosi mały przedmiot z dłoni do kieszeni lub vice versa. Musi on mieścić się w dłoni.
+Hexarcana,Pick Me Up!,Dla Kurażu,Duch,"Sprawia, że whisky przywraca k6 Tchu każdy punkt Tchu działa jednak jak jeden wypity kieliszek. Nie działa razem z Coffin Varnish."
+Podstawka,Preserve,Zachowanie,Wiedza,Chroni 1 funt dowolnej substancji (np. Jedzenia) przed zepsuciem przez jeden dzień.
+Podstawka,Reload,Załadunek,Spryt,Ładuje do dowolnej broni 3 pociski.
+Podstawka,Shatter,Zbicie,Duch,"Tłucze kruchy przedmiot, np. butelkę."
+Podstawka,Shout,Wrzask,Spryt,"Sprawia, że krzyk Kanciarza słychać wyraźnie na odległość do 200 jardów."
+Podstawka,Sound,Dzyń,Spryt,Pozwala stworzyć iluzoryczny dźwięk w promieniu równym kości Smarts. Bardziej złożone dźwięki wymagają zdania testu Sprytu (PT 7).
+Hexarcana,Startle,Zaniepokojenie,Spryt,"Podrażnia wszystkie 5 zmysłów. Dla ludzi -1 do testów Guts, dla zwierząt -2 do testów jz nimi związanymi (poza tym zaczynają zachowywać się dziwnie). Działa rundę na poziom Kantowania."
+Hexarcana,Tinhorn Shuffle,Oszustwo Cwaniaczka,Spryt,"Rzosypuje na wszystkie strony trzymaną talię kart, zwracając uwagę wszystkich w okolicy. Każdy (poza Kanciarzem!) ma na 1 rundę premię +2 do Skradania etc."
+Podstawka,Whisper,Szept,Spostrzegawczość,Pozwala przekazać szeptem wiadomość na odległość do 5 jardów.
+Podstawka,Will o' the Wisp,Błędny Ognik,Spryt,Tworzy bardzo słabo świecącą kulę zielonkawego światła. Zasięg widoczności to około 2-3 jardów.

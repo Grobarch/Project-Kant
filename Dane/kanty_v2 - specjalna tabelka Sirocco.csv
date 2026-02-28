@@ -1,0 +1,11 @@
+Ręka,Szybkość wiatru (mph),PT testu Siły,PT testu Latania,Premia / kara do Tempa statku,Kara do Niezawodności statku (bazowo 20 dla zwykłych statków)
+Para,10,3,5,+/- 25,-
+Para Waletów,20,3,5,+/- 50,-
+Dwie Pary,30,3,5,+/- 75,-
+Trójka,40,4,7,+/- 100,-1
+Strit,50,5,9,+/- 125,-2
+Kolor,60,6,11,+/- 150,-3
+Ful,70,7,13,+/- 175,-4
+Kareta,80,8,15,+/- 200,-5
+Poker,90,9,17,+/- 225,-6
+K. Poker,100,10,19,+/- 250,-7
