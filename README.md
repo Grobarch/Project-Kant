@@ -55,15 +55,14 @@ Pliki wyjściowe pojawią się w folderze `dist/`.
 1. Push kod do GitHub:
    ```bash
    git add .
-   git commit -m "Initial commit"
-   git push origin main
+   git commit -m "Deploy setup"
+   git push origin backend
    ```
 
 2. W ustawieniach repozytorium (Settings → Pages):
-   - Source: **Deploy from a branch**
-   - Branch: **main** / folder: **/dist**
+   - Source: **GitHub Actions**
 
-3. GitHub Actions automatycznie zbuduje i deployuje Twoją aplikację.
+3. Workflow `.github/workflows/deploy-pages.yml` automatycznie zbuduje `dist/` i wdroży aplikację.
 
 ## Funkcje
 
