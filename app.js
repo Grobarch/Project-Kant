@@ -1452,6 +1452,35 @@ function switchView(viewName) {
     }
 }
 
+function normalizeCharacterImageUrl(rawUrl) {
+    if (!rawUrl) return null;
+
+    const trimmedUrl = String(rawUrl).trim();
+    if (!trimmedUrl) return null;
+
+    if (trimmedUrl.startsWith('//')) {
+        return `https:${trimmedUrl}`;
+    }
+
+    if (trimmedUrl.startsWith('http://')) {
+        return `https://${trimmedUrl.slice('http://'.length)}`;
+    }
+
+    if (trimmedUrl.startsWith('https://') || trimmedUrl.startsWith('data:image/')) {
+        return trimmedUrl;
+    }
+
+    try {
+        const parsedUrl = new URL(trimmedUrl);
+        if (parsedUrl.protocol === 'http:') {
+            parsedUrl.protocol = 'https:';
+        }
+        return parsedUrl.href;
+    } catch {
+        return null;
+    }
+}
+
 // ============================
 // CHARACTER MANAGEMENT
 // ============================
@@ -1559,10 +1588,13 @@ function updateCharacterManagementView() {
         characterHint.style.display = userCharacters.length === 0 ? 'block' : 'none';
         characterHint.textContent = 'Utwórz swojego pierwszego kanciarza, aby zacząć zarządzać kantami i księgami.';
 
-        charactersList.innerHTML = userCharacters.map(char => `
+        charactersList.innerHTML = userCharacters.map(char => {
+            const characterImageUrl = normalizeCharacterImageUrl(char.image_url);
+
+            return `
             <div class="character-card" data-character-id="${char.id}">
-                ${char.image_url 
-                    ? `<img src="${char.image_url}" alt="${char.name}" class="character-card-image" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                ${characterImageUrl
+                    ? `<img src="${characterImageUrl}" alt="${char.name}" class="character-card-image" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                        <div class="character-card-placeholder" style="display:none;">🤠</div>`
                     : `<div class="character-card-placeholder">🤠</div>`
                 }
@@ -1579,7 +1611,8 @@ function updateCharacterManagementView() {
                 </div>
                 <button class="character-delete-btn" data-character-id="${char.id}" title="Usuń tę postać">🗑️</button>
             </div>
-        `).join('');
+        `;
+        }).join('');
 
         // Add click handlers to character cards
         document.querySelectorAll('.character-card').forEach(card => {
@@ -1636,8 +1669,13 @@ function updateCharacterManagementView() {
         
         // Update character header
         characterName.textContent = currentCharacter.name;
-        if (currentCharacter.image_url) {
-            characterImage.src = currentCharacter.image_url;
+        const characterImageUrl = normalizeCharacterImageUrl(currentCharacter.image_url);
+        if (characterImageUrl) {
+            characterImage.onerror = () => {
+                characterImage.style.display = 'none';
+                characterImage.removeAttribute('src');
+            };
+            characterImage.src = characterImageUrl;
             characterImage.style.display = 'block';
             characterImage.classList.remove('character-image-placeholder');
             characterImage.classList.add('character-image');
@@ -2149,7 +2187,8 @@ async function handleCreateCharacter(e) {
     e.preventDefault();
     
     const name = newCharacterName.value.trim();
-    const imageUrl = newCharacterImageUrl.value.trim() || null;
+    const rawImageUrl = newCharacterImageUrl.value.trim();
+    const imageUrl = rawImageUrl ? normalizeCharacterImageUrl(rawImageUrl) : null;
 
     const errorDiv = document.getElementById('createCharacterError');
     const successDiv = document.getElementById('createCharacterSuccess');
@@ -2159,6 +2198,12 @@ async function handleCreateCharacter(e) {
 
     if (!name) {
         errorDiv.textContent = 'Imię postaci jest wymagane.';
+        errorDiv.style.display = 'block';
+        return;
+    }
+
+    if (rawImageUrl && !imageUrl) {
+        errorDiv.textContent = 'Nieprawidłowy URL obrazka. Użyj pełnego linku HTTPS.';
         errorDiv.style.display = 'block';
         return;
     }
@@ -2215,10 +2260,17 @@ async function handleEditCharacterName(e) {
 async function handleChangeCharacterImage(e) {
     e.preventDefault();
     
-    const imageUrl = editCharacterImageUrl.value.trim() || null;
+    const rawImageUrl = editCharacterImageUrl.value.trim();
+    const imageUrl = rawImageUrl ? normalizeCharacterImageUrl(rawImageUrl) : null;
     const errorDiv = document.getElementById('changeCharacterImageError');
 
     errorDiv.style.display = 'none';
+
+    if (rawImageUrl && !imageUrl) {
+        errorDiv.textContent = 'Nieprawidłowy URL obrazka. Użyj pełnego linku HTTPS.';
+        errorDiv.style.display = 'block';
+        return;
+    }
 
     const { data, error } = await updateCharacter(currentCharacter.id, { image_url: imageUrl });
 
