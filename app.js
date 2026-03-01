@@ -1762,8 +1762,10 @@ function updateCharacterKnownSpellsList() {
 
 function initKnownSpellsDragDrop() {
     let draggedEl = null;
+    let touchStartY = 0;
 
     characterKnownSpellsList.querySelectorAll('.known-spell-item[draggable]').forEach(item => {
+        // Desktop Drag & Drop
         item.addEventListener('dragstart', (e) => {
             draggedEl = item;
             item.classList.add('dragging');
@@ -1833,6 +1835,100 @@ function initKnownSpellsDragDrop() {
                 alert('Nie udało się zapisać nowej kolejności. Sprawdź konsolę.');
                 await loadCharacterData();  // Reload to restore previous order
             }
+        });
+
+        // Mobile Touch support
+        item.addEventListener('touchstart', (e) => {
+            draggedEl = item;
+            touchStartY = e.touches[0].clientY;
+            item.classList.add('dragging');
+            item.style.opacity = '0.7';
+        });
+
+        item.addEventListener('touchmove', (e) => {
+            if (!draggedEl) return;
+            e.preventDefault();
+
+            const touchY = e.touches[0].clientY;
+            const allItems = [...characterKnownSpellsList.querySelectorAll('.known-spell-item')];
+
+            // Find which item is under the touch point
+            for (const el of allItems) {
+                const rect = el.getBoundingClientRect();
+                if (touchY >= rect.top && touchY <= rect.bottom) {
+                    if (el !== draggedEl) {
+                        characterKnownSpellsList.querySelectorAll('.known-spell-item').forEach(i => i.classList.remove('drag-over'));
+                        el.classList.add('drag-over');
+                    }
+                    break;
+                }
+            }
+        });
+
+        item.addEventListener('touchend', async (e) => {
+            if (!draggedEl) return;
+
+            const touchY = e.changedTouches[0].clientY;
+            const allItems = [...characterKnownSpellsList.querySelectorAll('.known-spell-item')];
+            
+            let targetEl = null;
+            for (const el of allItems) {
+                const rect = el.getBoundingClientRect();
+                if (touchY >= rect.top && touchY <= rect.bottom && el !== draggedEl) {
+                    targetEl = el;
+                    break;
+                }
+            }
+
+            characterKnownSpellsList.querySelectorAll('.known-spell-item').forEach(el => {
+                el.classList.remove('dragging', 'drag-over');
+                el.style.opacity = '1';
+            });
+
+            if (!targetEl) {
+                draggedEl = null;
+                return;
+            }
+
+            // Reorder DOM
+            const fromIdx = allItems.indexOf(draggedEl);
+            const toIdx = allItems.indexOf(targetEl);
+            if (fromIdx < toIdx) {
+                targetEl.after(draggedEl);
+            } else {
+                targetEl.before(draggedEl);
+            }
+
+            // Persist new order to DB
+            const reordered = [...characterKnownSpellsList.querySelectorAll('.known-spell-item')];
+            const updates = reordered.map((el, i) => {
+                const id = el.getAttribute('data-spell-id');
+                return { id, sort_order: i + 1 };
+            });
+
+            console.log('[Touch Reorder] Saving new order:', updates);
+
+            const idOrder = updates.map(u => u.id);
+            knownSpells.sort((a, b) => idOrder.indexOf(String(a.id)) - idOrder.indexOf(String(b.id)));
+            knownSpells.forEach((s, i) => { s.sort_order = i + 1; });
+
+            let hasErrors = false;
+            for (const u of updates) {
+                const { error } = await updateKnownSpellOrder(u.id, u.sort_order);
+                if (error) {
+                    console.error(`[Touch Reorder] Failed to save sort_order for spell ${u.id}:`, error);
+                    hasErrors = true;
+                } else {
+                    console.log(`[Touch Reorder] Saved sort_order=${u.sort_order} for spell ${u.id}`);
+                }
+            }
+
+            if (hasErrors) {
+                alert('Nie udało się zapisać nowej kolejności.');
+                await loadCharacterData();
+            }
+
+            draggedEl = null;
         });
     });
 }
@@ -2154,11 +2250,14 @@ async function addSpellToBookWithStatus(itemEl, status, btn) {
         itemEl.style.transition = 'opacity 0.3s';
         setTimeout(() => itemEl.remove(), 300);
 
-        // Update present spells count
+        // Update present spells count and re-render the list
         const { data: presentSpells } = await getSpellbookSpells(currentSpellbook.id, 'present');
         if (presentSpells) {
             document.getElementById('spellbookDetailsCount').textContent = presentSpells.length;
         }
+
+        // Re-render the "W księdze" tab to show updated list
+        await renderPresentSpellsForSpellbook();
 
     } catch (err) {
         alert('Nie udało się dodać czaru');
