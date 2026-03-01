@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Kant 2.0</title>
+    <link rel="icon" type="image/x-icon" href="/assets/star-CZKp49Zm.ico">
+  <script type="module" crossorigin src="/assets/index-Cj5KdQVo.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-DhuKU1Gp.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Nagłówek -->
+        <header>
+            <div class="header-top">
+                <div class="header-title">
+                    <h1>Project Kant 2.0</h1>
+                    <p>Baza danych zaklęć i sztuczek z systemu Deadlands</p>
+                </div>
+                <div class="header-auth">
+                    <button id="loginBtn" class="auth-btn">Zaloguj się</button>
+                    <span id="userInfo" class="user-info" style="display: none;">
+                        <span id="userName"></span>
+                        <button id="logoutBtn" class="auth-btn logout">Wyloguj się</button>
+                    </span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Nawigacja zakładek -->
+        <div class="tabs-navigation">
+            <button class="tab-btn active" data-tab="card-view">🎴 Widok Karciany</button>
+            <button class="tab-btn" data-tab="table-view">📋 Tabela</button>
+            <button class="tab-btn" data-tab="manage-view" id="manageTabBtn" style="display: none;">⚙️ Zarządzanie</button>
+            <button id="addSpellBtn" class="btn-add-spell" style="display: none;">✨ Dodaj Kant</button>
+        </div>
+
+        <div id="knownSpellsPanel" class="known-spells-panel" style="display: none;">
+            <div class="known-spells-header">
+                <h3>Znane Zaklęcia</h3>
+                <span id="knownSpellsCount" class="known-count">0</span>
+            </div>
+            <p id="knownSpellsHint" class="known-spells-hint">Zaloguj się, aby zarządzać listą znanych zaklęć.</p>
+            <ul id="knownSpellsList" class="known-spells-list"></ul>
+        </div>
+
+        <!-- Spellbooks Panel -->
+        <div id="spellbooksPanel" class="spellbooks-panel" style="display: none;">
+            <div class="spellbooks-header">
+                <h3>Księgi Hoyla</h3>
+                <button id="createSpellbookBtn" class="btn-create-spellbook">+ Nowa Księga</button>
+            </div>
+            <p id="spellbooksHint" class="spellbooks-hint">Zaloguj się, aby zarządzać księgami zaklęć.</p>
+            <div id="spellbooksList" class="spellbooks-list"></div>
+        </div>
+
+        <!-- Widok Karciany -->
+        <div id="card-view" class="view-section active">
+            <!-- Omnibox Search -->
+            <div class="omnibox-container card-search-container">
+                <div class="search-box card-search-box">
+                    <input 
+                        type="text" 
+                        id="cardSearchInput" 
+                        placeholder="🔍 Szukaj kanta..."
+                        class="search-input"
+                        autocomplete="off"
+                    >
+                </div>
+                <div class="omnibox-suggestions" id="omniboxSuggestions"></div>
+            </div>
+
+            <!-- Karciany widok - pojedyncza karta -->
+            <div class="card-display-container">
+                <div class="game-card" id="gameCard">
+                    <div class="loading-card">Ładowanie danych...</div>
+                </div>
+
+
+            </div>
+        </div>
+
+        <!-- Widok Tabelaryczny -->
+        <div id="table-view" class="view-section">
+            <div class="controls-panel">
+                <!-- Wyszukiwanie -->
+                <div class="search-box">
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        placeholder="Szukaj po angielskiej lub polskiej nazwie..."
+                        class="search-input"
+                    >
+                    <span class="search-icon">🔍</span>
+                </div>
+
+                <!-- Filtry -->
+                <div class="filters">
+                    <div class="filter-group">
+                        <label for="typeFilter">Typ:</label>
+                        <select id="typeFilter" class="filter-select">
+                            <option value="">Wszystkie</option>
+                            <option value="kant">Kanty</option>
+                            <option value="sztuka">Sztuczki</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="sourceFilter">Źródło:</label>
+                        <select id="sourceFilter" class="filter-select">
+                            <option value="">Wszystkie źródła</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="featureFilter">Cecha:</label>
+                        <select id="featureFilter" class="filter-select">
+                            <option value="">Wszystkie cechy</option>
+                        </select>
+                    </div>
+
+                    <button id="resetFilters" class="btn-reset">⟲ Reset filtry</button>
+                </div>
+            </div>
+
+            <!-- Licznik wyników -->
+            <div class="results-info">
+                <p id="resultsCount">Ładowanie danych...</p>
+            </div>
+
+            <!-- Tabela kantów -->
+            <div class="table-wrapper">
+                <table id="spellsTable" class="spells-table">
+                    <thead>
+                        <tr>
+                            <th class="expand-col">▼</th>
+                            <th class="sortable sort-asc" data-sort="NazwaPL">Nazwa (PL)</th>
+                            <th class="sortable" data-sort="Nazwa">Nazwa (EN)</th>
+                            <th class="sortable" data-sort="type">Typ</th>
+                            <th class="sortable" data-sort="Źródło">Źródło</th>
+                            <th class="sortable" data-sort="Cecha">Cecha</th>
+                            <th class="sortable" data-sort="Min. Ręka">Min. Ręka</th>
+                            <th class="sortable" data-sort="Rzucanie">Czas przygotowania</th>
+                            <th class="sortable" data-sort="Czas">Czas działania</th>
+                            <th class="sortable" data-sort="Zasięg">Zasięg</th>
+                        </tr>
+                    </thead>
+                    <tbody id="spellsBody">
+                        <tr class="loading-row">
+                            <td colspan="10">Ładowanie danych...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Panel Zarządzania -->
+        <div id="manage-view" class="view-section">
+            <div class="manage-panel">
+                <div class="manage-header">
+                    <h2>⚙️ Zarządzanie Kantami</h2>
+                    <span id="manageRoleBadge" class="role-badge"></span>
+                </div>
+                <p class="manage-description" id="manageDescription"></p>
+
+                <!-- Search & filter -->
+                <div class="manage-toolbar">
+                    <div class="search-box manage-search">
+                        <input type="text" id="manageSearchInput" placeholder="🔍 Szukaj kanta do edycji..." class="search-input">
+                    </div>
+                    <div class="manage-filter-group">
+                        <label for="manageTypeFilter">Typ:</label>
+                        <select id="manageTypeFilter" class="filter-select">
+                            <option value="">Wszystkie</option>
+                            <option value="kant">Kanty</option>
+                            <option value="sztuka">Sztuczki</option>
+                        </select>
+                    </div>
+                    <div class="manage-filter-group" id="manageOwnerFilterGroup" style="display: none;">
+                        <label for="manageOwnerFilter">Autor:</label>
+                        <select id="manageOwnerFilter" class="filter-select">
+                            <option value="">Wszyscy</option>
+                            <option value="base">Bazowe (bez autora)</option>
+                            <option value="user">Dodane przez użytkowników</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Spell list -->
+                <div class="manage-results-info">
+                    <p id="manageResultsCount">Ładowanie...</p>
+                </div>
+                <div id="manageSpellsList" class="manage-spells-list"></div>
+            </div>
+        </div>
+
+        <!-- Details modal -->
+        <div id="detailsPanel" class="details-panel" style="display: none;">
+            <div class="details-content">
+                <button id="closeDetails" class="btn-close">✕</button>
+                <div id="detailsBody"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span id="closeLoginModal" class="close">&times;</span>
+            <h2>Zaloguj się</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Hasło:</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button type="submit" class="submit-btn">Zaloguj</button>
+                <div id="loginError" class="error-message" style="display: none;"></div>
+                <div id="loginSuccess" class="success-message" style="display: none;"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Spellbook Modal -->
+    <div id="createSpellbookModal" class="modal">
+        <div class="modal-content">
+            <span id="closeSpellbookModal" class="close">&times;</span>
+            <h2>Nowa Księga Hoyla</h2>
+            <form id="createSpellbookForm">
+                <div class="form-group">
+                    <label for="spellbookName">Nazwa księgi:</label>
+                    <input type="text" id="spellbookName" placeholder="np. Księga Ognia" required>
+                </div>
+                <div class="form-group">
+                    <label for="spellbookReliability">Niezawodność: <span id="reliabilityValue">1</span></label>
+                    <input type="range" id="spellbookReliability" min="1" max="5" value="1" class="reliability-slider">
+                    <div class="reliability-labels">
+                        <span>1</span>
+                        <span>2</span>
+                        <span>3</span>
+                        <span>4</span>
+                        <span>5</span>
+                    </div>
+                </div>
+                <button type="submit" class="submit-btn">Utwórz Księgę</button>
+                <div id="spellbookError" class="error-message" style="display: none;"></div>
+                <div id="spellbookSuccess" class="success-message" style="display: none;"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Spellbook Details Modal -->
+    <div id="spellbookDetailsModal" class="modal">
+        <div class="modal-content spellbook-details-content">
+            <span id="closeSpellbookDetailsModal" class="close">&times;</span>
+            <div class="spellbook-details-header">
+                <h2 id="spellbookDetailsTitle">Księga</h2>
+                <div class="spellbook-details-info">
+                    <span class="spellbook-reliability">Niezawodność: <strong id="spellbookDetailsReliability">1</strong></span>
+                    <span class="spellbook-spell-count">Zaklęć: <strong id="spellbookDetailsCount">0</strong></span>
+                </div>
+            </div>
+            <div id="spellbookDetailsSpells" class="spellbook-spells-list"></div>
+            <div class="spellbook-actions">
+                <button id="deleteSpellbookBtn" class="btn-delete-spellbook">🗑️ Usuń Księgę</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add to Spellbook Modal -->
+    <div id="addToSpellbookModal" class="modal">
+        <div class="modal-content add-to-spellbook-content">
+            <span id="closeAddToSpellbookModal" class="close">&times;</span>
+            <h2>Dodaj do księgi</h2>
+            <p id="addToSpellbookSpellName" class="spell-name-display"></p>
+            <div id="spellbookSelectionList" class="spellbook-selection-list"></div>
+            <div id="addToSpellbookMessage" class="info-message" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Add Spell Modal -->
+    <div id="addSpellModal" class="modal">
+        <div class="modal-content add-spell-content">
+            <span id="closeAddSpellModal" class="close">&times;</span>
+            <h2 id="addSpellModalTitle">Dodaj nowy kant / sztuczkę</h2>
+            <form id="addSpellForm">
+                <!-- Row 1: Type + Source -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="newSpellType">Typ:</label>
+                        <select id="newSpellType" required>
+                            <option value="kant">Kant</option>
+                            <option value="sztuka">Sztuczka</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="newSpellSource">Źródło:</label>
+                        <input type="text" id="newSpellSource" placeholder="np. HoE, Homebrew" required>
+                    </div>
+                </div>
+
+                <!-- Row 2: Names -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="newSpellNamePL">Nazwa (PL):</label>
+                        <input type="text" id="newSpellNamePL" placeholder="Polska nazwa" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newSpellNameEN">Nazwa (EN):</label>
+                        <input type="text" id="newSpellNameEN" placeholder="English name" required>
+                    </div>
+                </div>
+
+                <!-- Row 3: Attribute + Min Hand -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="newSpellAttribute">Cecha:</label>
+                        <input type="text" id="newSpellAttribute" placeholder="np. Wiedza, Duch">
+                    </div>
+                    <div class="form-group" id="minHandGroup">
+                        <label for="newSpellMinHand">Min. Ręka:</label>
+                        <input type="text" id="newSpellMinHand" placeholder="np. Para">
+                    </div>
+                </div>
+
+                <!-- Row 4: Casting + Duration + Range -->
+                <div class="form-row form-row-3">
+                    <div class="form-group" id="castingGroup">
+                        <label for="newSpellCasting">Rzucanie:</label>
+                        <input type="text" id="newSpellCasting" placeholder="np. 1 akcja">
+                    </div>
+                    <div class="form-group" id="durationGroup">
+                        <label for="newSpellDuration">Czas działania:</label>
+                        <input type="text" id="newSpellDuration" placeholder="np. Natychmiastowy">
+                    </div>
+                    <div class="form-group" id="rangeGroup">
+                        <label for="newSpellRange">Zasięg:</label>
+                        <input type="text" id="newSpellRange" placeholder="np. Dotyk">
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="form-group">
+                    <label for="newSpellDescription">Opis:</label>
+                    <textarea id="newSpellDescription" rows="4" placeholder="Opis zaklęcia..."></textarea>
+                </div>
+
+                <!-- Effects (only for Kanty) -->
+                <div id="effectsSection">
+                    <h3 class="effects-section-title">Efekty ręki pokerowej</h3>
+                    <div class="effects-grid">
+                        <div class="form-group effect-field">
+                            <label for="effectAce">As:</label>
+                            <textarea id="effectAce" rows="2"></textarea>
+                        </div>
+                        <div class="form-group effect-field">
+                            <label for="effectPair">Para:</label>
+                            <textarea id="effectPair" rows="2"></textarea>
+                        </div>
+                        <div class="form-group effect-field">
+                            <label for="effectFacePair">Para Figur:</label>
+                            <textarea id="effectFacePair" rows="2"></textarea>
+                        </div>
+                        <div class="form-group effect-field">
+                            <label for="effectTwoPair">Dwie Pary:</label>
+                            <textarea id="effectTwoPair" rows="2"></textarea>
+                        </div>
+                        <div class="form-group effect-field">
+                            <label for="effectThreeOfKind">Trójka:</label>
+                            <textarea id="effectThreeOfKind" rows="2"></textarea>
+                        </div>
+                        <div class="form-group effect-field">
+                            <label for="effectStraight">Strit:</label>
+                            <textarea id="effectStraight" rows="2"></textarea>
+                        </div>
+                        <div class="form-group effect-field">
+                            <label for="effectFlush">Kolor:</label>
+                            <textarea id="effectFlush" rows="2"></textarea>
+                        </div>
+                        <div class="form-group effect-field">
+                            <label for="effectFullHouse">Ful:</label>
+                            <textarea id="effectFullHouse" rows="2"></textarea>
+                        </div>
+                        <div class="form-group effect-field">
+                            <label for="effectFourOfKind">Kareta:</label>
+                            <textarea id="effectFourOfKind" rows="2"></textarea>
+                        </div>
+                        <div class="form-group effect-field">
+                            <label for="effectPoker">Poker:</label>
+                            <textarea id="effectPoker" rows="2"></textarea>
+                        </div>
+                        <div class="form-group effect-field">
+                            <label for="effectRoyalPoker">Królewski Poker:</label>
+                            <textarea id="effectRoyalPoker" rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn">💾 Zapisz</button>
+                <div id="addSpellError" class="error-message" style="display: none;"></div>
+                <div id="addSpellSuccess" class="success-message" style="display: none;"></div>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>
