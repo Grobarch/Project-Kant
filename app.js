@@ -1,5 +1,15 @@
 // Import Supabase client and auth functions
-import { supabase, signIn, signOut, getCurrentUser, ensureProfile, getKnownSpells, addKnownSpell, removeKnownSpell, createSpellbook, getSpellbooks, addSpellToSpellbook, getSpellbookSpells, createCustomSpell, getCustomSpells, getAllSpells, insertSpell, updateSpell, deleteSpell, getProfile } from './supabase.js';
+import { 
+    supabase, signIn, signOut, getCurrentUser, ensureProfile, 
+    getKnownSpells, addKnownSpell, removeKnownSpell, 
+    addSpellToSpellbook, getSpellbookSpells, removeSpellFromSpellbook, deleteSpellbook,
+    createCustomSpell, getCustomSpells, getAllSpells, insertSpell, updateSpell, deleteSpell, getProfile,
+    // New character functions
+    getCharacters, createCharacter, updateCharacter, deleteCharacter,
+    getKnownSpellsForCharacter, addKnownSpellToCharacter,
+    getSpellbooksForCharacter, createSpellbookForCharacter,
+    updateKnownSpellOrder
+} from './supabase.js';
 
 // Data storage
 let allSpells = [];
@@ -15,6 +25,11 @@ let userSpellbooks = [];
 let currentSpellForSpellbook = null; // Track which spell is being added to spellbook
 let editingSpellId = null; // Track which spell is being edited (null = add mode)
 let userDataLoaded = false; // Prevent double-loading from checkUserOnLoad + onAuthStateChange
+
+// Character state
+let userCharacters = [];
+let currentCharacter = null; // Currently selected character
+
 const FORCE_LOGOUT_KEY = 'project-kant-force-logout';
 const PROFILE_ENSURED_KEY = 'project-kant-profile-ok';
 
@@ -67,6 +82,7 @@ const effectsSection = document.getElementById('effectsSection');
 
 // DOM Elements - Management Panel
 const manageTabBtn = document.getElementById('manageTabBtn');
+const manageSidebarBtn = document.getElementById('manageSidebarBtn');
 const manageSearchInput = document.getElementById('manageSearchInput');
 const manageTypeFilter = document.getElementById('manageTypeFilter');
 const manageOwnerFilter = document.getElementById('manageOwnerFilter');
@@ -76,14 +92,75 @@ const manageResultsCount = document.getElementById('manageResultsCount');
 const manageRoleBadge = document.getElementById('manageRoleBadge');
 const manageDescription = document.getElementById('manageDescription');
 
+// DOM Elements - Character Management
+const charactersList = document.getElementById('charactersList');
+const characterHint = document.getElementById('characterHint');
+const createCharacterBtn = document.getElementById('createCharacterBtn');
+const createCharacterModal = document.getElementById('createCharacterModal');
+const closeCreateCharacterModal = document.getElementById('closeCreateCharacterModal');
+const createCharacterForm = document.getElementById('createCharacterForm');
+const newCharacterName = document.getElementById('newCharacterName');
+const newCharacterImageUrl = document.getElementById('newCharacterImageUrl');
+
+// DOM Elements - Character Details View
+const characterDetailsView = document.getElementById('characterDetailsView');
+const characterName = document.getElementById('characterName');
+const characterImage = document.getElementById('characterImage');
+const backToCharactersBtn = document.getElementById('backToCharactersBtn');
+const editCharacterNameBtn = document.getElementById('editCharacterNameBtn');
+const changeCharacterImageBtn = document.getElementById('changeCharacterImageBtn');
+const characterKnownSpellsList = document.getElementById('characterKnownSpellsList');
+const characterKnownSpellsCount = document.getElementById('characterKnownSpellsCount');
+const characterSpellbooksList = document.getElementById('characterSpellbooksList');
+const createCharacterSpellbookBtn = document.getElementById('createCharacterSpellbookBtn');
+
+// DOM Elements - Edit Character Modals
+const editCharacterNameModal = document.getElementById('editCharacterNameModal');
+const closeEditCharacterNameModal = document.getElementById('closeEditCharacterNameModal');
+const editCharacterNameForm = document.getElementById('editCharacterNameForm');
+const editCharacterNameInput = document.getElementById('editCharacterNameInput');
+const changeCharacterImageModal = document.getElementById('changeCharacterImageModal');
+const closeChangeCharacterImageModal = document.getElementById('closeChangeCharacterImageModal');
+const changeCharacterImageForm = document.getElementById('changeCharacterImageForm');
+const editCharacterImageUrl = document.getElementById('editCharacterImageUrl');
+
+// DOM Elements - Add Known Spell Modal
+const addKnownSpellBtn = document.getElementById('addKnownSpellBtn');
+const addKnownSpellModal = document.getElementById('addKnownSpellModal');
+const closeAddKnownSpellModal = document.getElementById('closeAddKnownSpellModal');
+const addKnownSpellSearch = document.getElementById('addKnownSpellSearch');
+const addKnownSpellResults = document.getElementById('addKnownSpellResults');
+
+// DOM Elements - Spellbook Details Tabs
+const spellbookTabButtons = document.querySelectorAll('.spellbook-tab-btn');
+const currentSpellsTab = document.getElementById('currentSpellsTab');
+const missingSpellsTab = document.getElementById('missingSpellsTab');
+const availableSpellsTab = document.getElementById('availableSpellsTab');
+const spellbookAvailableSearch = document.getElementById('spellbookAvailableSearch');
+const spellbookAvailableSpells = document.getElementById('spellbookAvailableSpells');
+const spellbookMissingSpells = document.getElementById('spellbookMissingSpells');
+const deleteSpellbookBtn = document.getElementById('deleteSpellbookBtn');
+
+// Current spellbook being viewed
+let currentSpellbook = null;
+
+// DOM Elements - Preview/Export
+const previewKnownSpellsBtn = document.getElementById('previewKnownSpellsBtn');
+const previewSpellbookBtn = document.getElementById('previewSpellbookBtn');
+const previewExportModal = document.getElementById('previewExportModal');
+const closePreviewExportModal = document.getElementById('closePreviewExportModal');
+const previewTitle = document.getElementById('previewTitle');
+const previewContent = document.getElementById('previewContent');
+const exportPDFBtn = document.getElementById('exportPDFBtn');
+
 // Card view state
 let currentCardIndex = 0;
 let allCardsForView = [];
 
-// DOM Elements - Modal & Tabs
+// DOM Elements - Modal & Navigation
 const detailsPanel = document.getElementById('detailsPanel');
 const closeDetailsBtn = document.getElementById('closeDetails');
-const tabButtons = document.querySelectorAll('.tab-btn');
+const sidebarButtons = document.querySelectorAll('.sidebar-btn');
 const viewSections = document.querySelectorAll('.view-section');
 
 // Poker hand names
@@ -165,13 +242,132 @@ function setupEventListeners() {
         }
     });
 
-    // Tabs
-    tabButtons.forEach(btn => {
+    // Sidebar Navigation
+    sidebarButtons.forEach(btn => {
         btn.addEventListener('click', (e) => {
-            const tabName = e.target.getAttribute('data-tab');
-            switchTab(tabName);
+            const viewName = e.currentTarget.getAttribute('data-view');
+            switchView(viewName);
         });
     });
+
+    // Character Management
+    if (createCharacterBtn) {
+        createCharacterBtn.addEventListener('click', () => {
+            createCharacterModal.style.display = 'block';
+        });
+    }
+
+    if (closeCreateCharacterModal) {
+        closeCreateCharacterModal.addEventListener('click', () => {
+            createCharacterModal.style.display = 'none';
+        });
+    }
+
+    if (createCharacterForm) {
+        createCharacterForm.addEventListener('submit', handleCreateCharacter);
+    }
+
+    if (backToCharactersBtn) {
+        backToCharactersBtn.addEventListener('click', () => {
+            currentCharacter = null;
+            updateCharacterManagementView();
+        });
+    }
+
+    if (editCharacterNameBtn) {
+        editCharacterNameBtn.addEventListener('click', () => {
+            if (currentCharacter) {
+                editCharacterNameInput.value = currentCharacter.name;
+                editCharacterNameModal.style.display = 'block';
+            }
+        });
+    }
+
+    if (closeEditCharacterNameModal) {
+        closeEditCharacterNameModal.addEventListener('click', () => {
+            editCharacterNameModal.style.display = 'none';
+        });
+    }
+
+    if (editCharacterNameForm) {
+        editCharacterNameForm.addEventListener('submit', handleEditCharacterName);
+    }
+
+    if (changeCharacterImageBtn) {
+        changeCharacterImageBtn.addEventListener('click', () => {
+            if (currentCharacter) {
+                editCharacterImageUrl.value = currentCharacter.image_url || '';
+                changeCharacterImageModal.style.display = 'block';
+            }
+        });
+    }
+
+    if (closeChangeCharacterImageModal) {
+        closeChangeCharacterImageModal.addEventListener('click', () => {
+            changeCharacterImageModal.style.display = 'none';
+        });
+    }
+
+    if (changeCharacterImageForm) {
+        changeCharacterImageForm.addEventListener('submit', handleChangeCharacterImage);
+    }
+
+    if (createCharacterSpellbookBtn) {
+        createCharacterSpellbookBtn.addEventListener('click', () => {
+            createSpellbookModal.style.display = 'block';
+        });
+    }
+
+    // Add Known Spell Modal
+    if (addKnownSpellBtn) {
+        addKnownSpellBtn.addEventListener('click', () => {
+            addKnownSpellModal.style.display = 'block';
+            addKnownSpellSearch.value = '';
+            renderAddKnownSpellResults();
+        });
+    }
+
+    if (closeAddKnownSpellModal) {
+        closeAddKnownSpellModal.addEventListener('click', () => {
+            addKnownSpellModal.style.display = 'none';
+        });
+    }
+
+    if (addKnownSpellSearch) {
+        addKnownSpellSearch.addEventListener('input', renderAddKnownSpellResults);
+    }
+
+    // Spellbook Details Tabs
+    spellbookTabButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const tabName = e.currentTarget.getAttribute('data-tab');
+            switchSpellbookTab(tabName);
+        });
+    });
+
+    if (spellbookAvailableSearch) {
+        spellbookAvailableSearch.addEventListener('input', renderAvailableSpellsForSpellbook);
+    }
+
+    if (deleteSpellbookBtn) {
+        deleteSpellbookBtn.addEventListener('click', handleDeleteSpellbook);
+    }
+
+    // Add spell to spellbook button (in current spells tab)
+    const addSpellToSpellbookBtn = document.getElementById('addSpellToSpellbookBtn');
+    if (addSpellToSpellbookBtn) {
+        addSpellToSpellbookBtn.addEventListener('click', () => {
+            switchSpellbookTab('available-spells');
+        });
+    }
+
+    // Add missing spell button
+    const addMissingSpellBtn = document.getElementById('addMissingSpellBtn');
+    if (addMissingSpellBtn) {
+        addMissingSpellBtn.addEventListener('click', () => {
+            switchSpellbookTab('available-spells');
+        });
+    }
 
     // Spellbooks
     if (createSpellbookBtn) {
@@ -208,6 +404,25 @@ function setupEventListeners() {
         });
     }
 
+    // Preview/Export event listeners
+    if (previewKnownSpellsBtn) {
+        previewKnownSpellsBtn.addEventListener('click', handlePreviewKnownSpells);
+    }
+
+    if (previewSpellbookBtn) {
+        previewSpellbookBtn.addEventListener('click', handlePreviewSpellbook);
+    }
+
+    if (closePreviewExportModal) {
+        closePreviewExportModal.addEventListener('click', () => {
+            previewExportModal.style.display = 'none';
+        });
+    }
+
+    if (exportPDFBtn) {
+        exportPDFBtn.addEventListener('click', handleExportToPDF);
+    }
+
     window.addEventListener('click', (event) => {
         if (event.target === createSpellbookModal) {
             createSpellbookModal.style.display = 'none';
@@ -220,6 +435,12 @@ function setupEventListeners() {
         }
         if (event.target === addSpellModal) {
             addSpellModal.style.display = 'none';
+        }
+        if (event.target === addKnownSpellModal) {
+            addKnownSpellModal.style.display = 'none';
+        }
+        if (event.target === previewExportModal) {
+            previewExportModal.style.display = 'none';
         }
     });
 
@@ -238,7 +459,7 @@ function setupEventListeners() {
 
     if (newSpellType) {
         newSpellType.addEventListener('change', () => {
-            const isSztuka = newSpellType.value === 'sztuka';
+            const isSztuka = newSpellType.value === 'sztuczka';
             effectsSection.classList.toggle('hidden', isSztuka);
             // Hide/show kant-specific fields
             document.getElementById('minHandGroup').style.display = isSztuka ? 'none' : '';
@@ -288,10 +509,10 @@ function mapDbSpellToLegacy(dbSpell) {
         'Nazwa': dbSpell.name_en || '',
         'NazwaPL': dbSpell.name_pl || '',
         'Cecha': dbSpell.attribute || '',
-        'Min. Ręka': dbSpell.min_hand || (dbSpell.type === 'sztuka' ? '-' : ''),
-        'Rzucanie': dbSpell.casting || (dbSpell.type === 'sztuka' ? '-' : ''),
-        'Czas': dbSpell.duration || (dbSpell.type === 'sztuka' ? '-' : ''),
-        'Zasięg': dbSpell.range || (dbSpell.type === 'sztuka' ? '-' : ''),
+        'Min. Ręka': dbSpell.min_hand || (dbSpell.type === 'sztuczka' ? '-' : ''),
+        'Rzucanie': dbSpell.casting || (dbSpell.type === 'sztuczka' ? '-' : ''),
+        'Czas': dbSpell.duration || (dbSpell.type === 'sztuczka' ? '-' : ''),
+        'Zasięg': dbSpell.range || (dbSpell.type === 'sztuczka' ? '-' : ''),
         'Opis': dbSpell.description || '',
         nazwaLower: (dbSpell.name_pl || '').toLowerCase(),
         nazwaEnLower: (dbSpell.name_en || '').toLowerCase(),
@@ -318,6 +539,9 @@ function openAddSpellModal(spellToEdit = null) {
     document.getElementById('castingGroup').style.display = '';
     document.getElementById('durationGroup').style.display = '';
     document.getElementById('rangeGroup').style.display = '';
+    
+    // Populate dropdown fields
+    populateAddSpellForm();
 
     if (spellToEdit) {
         // Edit mode - populate form
@@ -349,7 +573,7 @@ function openAddSpellModal(spellToEdit = null) {
         document.getElementById('effectRoyalPoker').value = spellToEdit['Królewski Poker'] || '';
 
         // Toggle visibility based on type
-        const isSztuka = spellToEdit.type === 'sztuka';
+        const isSztuka = spellToEdit.type === 'sztuczka';
         effectsSection.classList.toggle('hidden', isSztuka);
         document.getElementById('minHandGroup').style.display = isSztuka ? 'none' : '';
         document.getElementById('castingGroup').style.display = isSztuka ? 'none' : '';
@@ -366,7 +590,7 @@ function openAddSpellModal(spellToEdit = null) {
 // Collect form data into DB-format spell object
 function collectSpellFormData() {
     const type = newSpellType.value;
-    const isSztuka = type === 'sztuka';
+    const isSztuka = type === 'sztuczka';
 
     const spellData = {
         type,
@@ -630,26 +854,36 @@ async function handleDeleteSpell(spell) {
 
 // Update management panel UI (show/hide, role badge, description)
 function updateManagePanel() {
-    if (!manageTabBtn) return;
+    if (!manageSidebarBtn) return;
 
     if (currentUser) {
-        manageTabBtn.style.display = 'inline-block';
+        manageSidebarBtn.style.display = 'flex';
 
         if (isAdmin) {
-            manageRoleBadge.textContent = 'Administrator';
-            manageRoleBadge.className = 'role-badge admin';
-            manageDescription.textContent = 'Jako administrator możesz edytować i usuwać wszystkie kanty w bazie danych.';
-            manageOwnerFilterGroup.style.display = 'flex';
+            if (manageRoleBadge) {
+                manageRoleBadge.textContent = 'Administrator';
+                manageRoleBadge.className = 'role-badge admin';
+            }
+            if (manageDescription) {
+                manageDescription.textContent = 'Jako administrator możesz edytować i usuwać wszystkie kanty w bazie danych.';
+            }
+            if (manageOwnerFilterGroup) {
+                manageOwnerFilterGroup.style.display = 'flex';
+            }
         } else {
-            manageRoleBadge.textContent = 'Użytkownik';
-            manageRoleBadge.className = 'role-badge user';
-            manageDescription.textContent = 'Możesz edytować i usuwać tylko kanty, które sam dodałeś.';
-            manageOwnerFilterGroup.style.display = 'none';
+            if (manageRoleBadge) {
+                manageRoleBadge.textContent = 'Użytkownik';
+                manageRoleBadge.className = 'role-badge user';
+            }
+            if (manageDescription) {
+                manageDescription.textContent = 'Możesz edytować i usuwać tylko kanty, które sam dodałeś.';
+            }
+            if (manageOwnerFilterGroup) {
+                manageOwnerFilterGroup.style.display = 'none';
+            }
         }
-
-        renderManageSpellsList();
     } else {
-        manageTabBtn.style.display = 'none';
+        manageSidebarBtn.style.display = 'none';
     }
 }
 
@@ -673,7 +907,7 @@ async function loadData() {
         allSpells = data.map(mapDbSpellToLegacy);
         
         const kantyCount = allSpells.filter(s => s.type === 'kant').length;
-        const sztuCount = allSpells.filter(s => s.type === 'sztuka').length;
+        const sztuCount = allSpells.filter(s => s.type === 'sztuczka').length;
         console.log(`Kantów: ${kantyCount}, Sztuczek: ${sztuCount}, Łącznie: ${allSpells.length}`);
 
         // Populate filter dropdowns
@@ -726,6 +960,44 @@ function populateFilters() {
         option.textContent = feature;
         featureFilter.appendChild(option);
     });
+}
+
+// Populate dropdowns in Add/Edit Spell form
+function populateAddSpellForm() {
+    // Get unique sources and add Homebrew
+    const sources = new Set(allSpells
+        .map(s => s.Źródło)
+        .filter(s => s && s.trim() !== '' && s.toLowerCase() !== 'pies')
+    );
+    sources.add('Homebrew'); // Add Homebrew option
+    
+    const sourceSelect = document.getElementById('newSpellSource');
+    const selectedSource = sourceSelect.value; // Remember current selection
+    sourceSelect.innerHTML = '<option value="">Wybierz źródło</option>';
+    Array.from(sources).sort().forEach(source => {
+        const option = document.createElement('option');
+        option.value = source;
+        option.textContent = source;
+        sourceSelect.appendChild(option);
+    });
+    if (selectedSource) sourceSelect.value = selectedSource; // Restore selection
+
+    // Get unique features
+    const features = new Set(allSpells
+        .map(s => s.Cecha)
+        .filter(s => s && s.trim() !== '')
+    );
+    
+    const attributeSelect = document.getElementById('newSpellAttribute');
+    const selectedAttribute = attributeSelect.value; // Remember current selection
+    attributeSelect.innerHTML = '<option value="">Wybierz cechę</option>';
+    Array.from(features).sort().forEach(feature => {
+        const option = document.createElement('option');
+        option.value = feature;
+        option.textContent = feature;
+        attributeSelect.appendChild(option);
+    });
+    if (selectedAttribute) attributeSelect.value = selectedAttribute; // Restore selection
 }
 
 // Apply all filters
@@ -858,6 +1130,41 @@ function renderSpells() {
             detailsRow.classList.toggle('visible');
         });
     });
+
+    // Add action button listeners
+    spellsBody.querySelectorAll('.btn-known').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const spellId = parseInt(btn.getAttribute('data-spell-id'));
+            const spell = filteredSpells.find(s => s.id === spellId);
+            if (spell) {
+                await toggleKnownSpell(spell);
+                renderTable(); // Refresh to update button state
+            }
+        });
+    });
+
+    spellsBody.querySelectorAll('.btn-spellbook').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const spellId = parseInt(btn.getAttribute('data-spell-id'));
+            const spell = filteredSpells.find(s => s.id === spellId);
+            if (spell) {
+                openAddToSpellbookModal(spell);
+            }
+        });
+    });
+
+    spellsBody.querySelectorAll('.btn-delete-own-spell').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const spellId = parseInt(btn.getAttribute('data-spell-id'));
+            const spell = filteredSpells.find(s => s.id === spellId) || allSpells.find(s => s.id === spellId);
+            if (spell) {
+                await handleDeleteSpell(spell);
+            }
+        });
+    });
 }
 
 // Render spell details
@@ -900,6 +1207,32 @@ function renderSpellDetails(spell) {
         html += `</tbody>
             </table>
         </div>`;
+    }
+
+    // Action buttons
+    if (currentUser) {
+        html += `<div class="spell-detail-actions">`;
+
+        if (currentCharacter) {
+            const isKnown = getKnownSpellEntry(spell);
+            html += `<button class="btn-action btn-known" data-spell-id="${spell.id}" data-is-known="${isKnown ? 'true' : 'false'}">
+                ${isKnown ? '✓ Znane' : '+ Dodaj do znanych'}
+            </button>`;
+
+            if (userSpellbooks.length > 0) {
+                html += `<button class="btn-action btn-spellbook" data-spell-id="${spell.id}">
+                    📕 Dodaj do księgi
+                </button>`;
+            }
+        }
+
+        if (canDeleteSpell(spell)) {
+            html += `<button class="btn-action btn-delete-own-spell" data-spell-id="${spell.id}">
+                🗑️ Usuń mój kant
+            </button>`;
+        }
+
+        html += `</div>`;
     }
 
     return html;
@@ -991,7 +1324,7 @@ function renderCard() {
 
     const spell = allCardsForView[currentCardIndex];
     const typeLabel = spell.type === 'kant' ? 'KANT' : 'SZTUCZKA';
-    const typeBgClass = spell.type === 'kant' ? 'kant' : 'sztuka';
+    const typeBgClass = spell.type === 'kant' ? 'kant' : 'sztuczka';
     const knownEntry = getKnownSpellEntry(spell);
     const isKnown = Boolean(knownEntry);
 
@@ -1036,8 +1369,6 @@ function renderCard() {
         <div class="card-footer">
             <div class="card-footer-actions">
                 ${spell.type === 'kant' ? '<button class="btn-show-effects" id="showEffectsBtn">Zobacz Efekty</button>' : ''}
-                ${currentUser ? `<button class="btn-known-toggle ${isKnown ? 'known-active' : ''}" id="toggleKnownSpellBtn">${isKnown ? 'Usuń ze znanych' : 'Dodaj do znanych'}</button>` : ''}
-                ${currentUser ? '<button class="btn-add-to-spellbook" id="addToSpellbookBtn">📖 Dodaj do księgi</button>' : ''}
                 ${canEditSpell(spell) ? `<button class="btn-edit-spell" id="editCardSpellBtn">✏️ Edytuj</button>` : ''}
             </div>
             <span class="card-type-badge type-badge ${typeBgClass}">${typeLabel}</span>
@@ -1054,22 +1385,10 @@ function renderCard() {
         }
     }
 
-    if (currentUser) {
-        const toggleKnownSpellBtn = document.getElementById('toggleKnownSpellBtn');
-        if (toggleKnownSpellBtn) {
-            toggleKnownSpellBtn.addEventListener('click', () => toggleKnownSpell(spell));
-        }
-        
-        const addToSpellbookBtn = document.getElementById('addToSpellbookBtn');
-        if (addToSpellbookBtn) {
-            addToSpellbookBtn.addEventListener('click', () => handleAddToSpellbook(spell));
-        }
-
     // Edit button on card
     const editCardSpellBtn = document.getElementById('editCardSpellBtn');
     if (editCardSpellBtn) {
         editCardSpellBtn.addEventListener('click', () => openAddSpellModal(spell));
-    }
     }
 }
 
@@ -1104,11 +1423,11 @@ function showCardEffects(spell) {
 }
 
 // Switch tabs
-function switchTab(tabName) {
-    // Update buttons
-    tabButtons.forEach(btn => {
+function switchView(viewName) {
+    // Update sidebar buttons
+    sidebarButtons.forEach(btn => {
         btn.classList.remove('active');
-        if (btn.getAttribute('data-tab') === tabName) {
+        if (btn.getAttribute('data-view') === viewName) {
             btn.classList.add('active');
         }
     });
@@ -1116,23 +1435,805 @@ function switchTab(tabName) {
     // Update sections
     viewSections.forEach(section => {
         section.classList.remove('active');
-        if (section.id === tabName) {
+        if (section.id === viewName) {
             section.classList.add('active');
         }
     });
 
-
-    // Refresh management panel on tab switch
-    if (tabName === 'manage-view') {
-        renderManageSpellsList();
+    // Refresh management panel on view switch
+    if (viewName === 'manage-view') {
+        updateCharacterManagementView();
     }
     // Initialize card view focus when switching to card view
-    if (tabName === 'card-view') {
+    if (viewName === 'card-view') {
         setTimeout(() => {
             cardSearchInput.focus();
         }, 100);
     }
 }
+
+// ============================
+// CHARACTER MANAGEMENT
+// ============================
+
+async function loadCharacters() {
+    if (!currentUser) {
+        userCharacters = [];
+        return;
+    }
+
+    const { data, error } = await getCharacters(currentUser.id);
+    if (error) {
+        console.error('Error loading characters:', error);
+        return;
+    }
+
+    userCharacters = data || [];
+    
+    // Load actual spell and spellbook counts for each character
+    for (const char of userCharacters) {
+        const { data: knownSpellsData } = await getKnownSpellsForCharacter(char.id);
+        const { data: spellbooksData } = await getSpellbooksForCharacter(char.id);
+        char.known_spells_count = knownSpellsData?.length || 0;
+        char.spellbooks_count = spellbooksData?.length || 0;
+    }
+    
+    updateCharacterManagementView();
+    updateAllCharacterCardStats();  // Update all cards after loading
+}
+
+function updateCharacterCardStats() {
+    if (!currentCharacter) return;
+    
+    // Find the card for current character (compare as strings to avoid type issues)
+    const card = [...document.querySelectorAll('.character-card')].find(c => 
+        String(c.getAttribute('data-character-id')) === String(currentCharacter.id)
+    );
+    
+    if (!card) {
+        console.warn(`[updateCharacterCardStats] Card not found for character ID: ${currentCharacter.id}`);
+        return;
+    }
+    
+    console.log(`[updateCharacterCardStats] Updating card for ${currentCharacter.name}: ${knownSpells.length} spells, ${userSpellbooks.length} spellbooks`);
+    updateCardNumberSpans(card, knownSpells.length, userSpellbooks.length);
+}
+
+function updateAllCharacterCardStats() {
+    console.log('[updateAllCharacterCardStats] Updating all character cards');
+    document.querySelectorAll('.character-card').forEach(card => {
+        const characterId = card.getAttribute('data-character-id');
+        const character = userCharacters.find(c => String(c.id) === String(characterId));
+        
+        if (character) {
+            // Get counts for this character from the character object
+            const knownCount = character.known_spells_count || 0;
+            const spellbooksCount = character.spellbooks_count || 0;
+            console.log(`[updateAllCharacterCardStats] Card ${character.name}: ${knownCount} spells, ${spellbooksCount} spellbooks`);
+            updateCardNumberSpans(card, knownCount, spellbooksCount);
+        }
+    });
+}
+
+function updateCardNumberSpans(card, knownCount, spellbooksCount) {
+    const statsContainer = card.querySelector('.character-card-stats');
+    if (!statsContainer) {
+        console.warn('[updateCardNumberSpans] Stats container not found');
+        return;
+    }
+    
+    // Get all spans in stats container (skip emoji spans)
+    const allSpans = Array.from(statsContainer.querySelectorAll('span'));
+    
+    // Find the number spans by looking for ones that contain only digits
+    const numberSpans = allSpans.filter(span => /^\d+$/.test(span.textContent.trim()));
+    
+    if (numberSpans.length >= 2) {
+        numberSpans[0].textContent = knownCount;
+        numberSpans[1].textContent = spellbooksCount;
+        console.log(`[updateCardNumberSpans] Updated: ${knownCount} spells, ${spellbooksCount} spellbooks`);
+    } else {
+        console.warn(`[updateCardNumberSpans] Expected 2 number spans but found ${numberSpans.length}`);
+    }
+}
+
+function updateCharacterManagementView() {
+    if (!currentUser) {
+        characterHint.style.display = 'block';
+        characterHint.textContent = 'Zaloguj się, aby zarządzać kanciarzami.';
+        charactersList.innerHTML = '';
+        characterDetailsView.style.display = 'none';
+        document.querySelector('.character-management').style.display = 'block';
+        if (manageSidebarBtn) manageSidebarBtn.style.display = 'none';
+        return;
+    }
+
+    // Show management sidebar button
+    if (manageSidebarBtn) manageSidebarBtn.style.display = 'flex';
+
+    // If no character is selected, show character list
+    if (!currentCharacter) {
+        document.querySelector('.character-management').style.display = 'block';
+        characterDetailsView.style.display = 'none';
+        
+        characterHint.style.display = userCharacters.length === 0 ? 'block' : 'none';
+        characterHint.textContent = 'Utwórz swojego pierwszego kanciarza, aby zacząć zarządzać kantami i księgami.';
+
+        charactersList.innerHTML = userCharacters.map(char => `
+            <div class="character-card" data-character-id="${char.id}">
+                ${char.image_url 
+                    ? `<img src="${char.image_url}" alt="${char.name}" class="character-card-image" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                       <div class="character-card-placeholder" style="display:none;">🤠</div>`
+                    : `<div class="character-card-placeholder">🤠</div>`
+                }
+                <div class="character-card-name">${char.name}</div>
+                <div class="character-card-stats">
+                    <div class="character-card-stat">
+                        <span>🃏</span>
+                        <span>${char.known_spells_count || 0}</span>
+                    </div>
+                    <div class="character-card-stat">
+                        <span>📕</span>
+                        <span>${char.spellbooks_count || 0}</span>
+                    </div>
+                </div>
+                <button class="character-delete-btn" data-character-id="${char.id}" title="Usuń tę postać">🗑️</button>
+            </div>
+        `).join('');
+
+        // Add click handlers to character cards
+        document.querySelectorAll('.character-card').forEach(card => {
+            card.addEventListener('click', (e) => {
+                // Don't open character if delete button was clicked
+                if (e.target.classList.contains('character-delete-btn')) return;
+                
+                const characterId = card.getAttribute('data-character-id');
+                const character = userCharacters.find(c => c.id === parseInt(characterId));
+                if (character) {
+                    selectCharacter(character);
+                }
+            });
+        });
+
+        // Add delete handlers to character cards
+        document.querySelectorAll('.character-delete-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const characterId = btn.getAttribute('data-character-id');
+                const character = userCharacters.find(c => String(c.id) === String(characterId));
+                
+                if (!character) return;
+                
+                if (confirm(`Czy na pewno chcesz usunąć postać "${character.name}" i wszystkie jej dane?\n\nTej operacji nie można cofnąć.`)) {
+                    const { error } = await deleteCharacter(characterId);
+                    if (error) {
+                        alert(`Błąd usuwania postaci: ${error.message}`);
+                        return;
+                    }
+                    
+                    // If we were viewing this character, go back to list
+                    if (currentCharacter && String(currentCharacter.id) === String(characterId)) {
+                        currentCharacter = null;
+                        characterDetailsView.style.display = 'none';
+                    }
+                    
+                    // Reload characters list
+                    await loadCharacters();
+                }
+            });
+        });
+
+        // Show spell management for all logged users (admins: all spells, users: own spells)
+        const adminSpellManagement = document.getElementById('adminSpellManagement');
+        if (adminSpellManagement) {
+            adminSpellManagement.style.display = 'block';
+            renderManageSpellsList();
+        }
+    } else {
+        // Show character details
+        document.querySelector('.character-management').style.display = 'none';
+        characterDetailsView.style.display = 'block';
+        
+        // Update character header
+        characterName.textContent = currentCharacter.name;
+        if (currentCharacter.image_url) {
+            characterImage.src = currentCharacter.image_url;
+            characterImage.style.display = 'block';
+            characterImage.classList.remove('character-image-placeholder');
+            characterImage.classList.add('character-image');
+        } else {
+            characterImage.src = '';
+            characterImage.style.display = 'none';
+        }
+
+        // Load character's known spells and spellbooks
+        loadCharacterData();
+
+        // Hide admin spell management when viewing character details
+        const adminSpellManagement = document.getElementById('adminSpellManagement');
+        if (adminSpellManagement) {
+            adminSpellManagement.style.display = 'none';
+        }
+    }
+}
+
+async function selectCharacter(character) {
+    currentCharacter = character;
+    updateCharacterManagementView();
+}
+
+async function loadCharacterData() {
+    if (!currentCharacter) return;
+
+    // Load known spells
+    const { data: spells, error: spellsError } = await getKnownSpellsForCharacter(currentCharacter.id);
+    if (!spellsError && spells) {
+        knownSpells = spells;
+        updateCharacterKnownSpellsList();
+    }
+
+    // Load spellbooks
+    const { data: spellbooks, error: spellbooksError } = await getSpellbooksForCharacter(currentCharacter.id);
+    if (!spellbooksError && spellbooks) {
+        userSpellbooks = spellbooks;
+        updateCharacterSpellbooksList();
+    }
+
+    // Update userCharacters with fresh counts
+    const charInList = userCharacters.find(c => String(c.id) === String(currentCharacter.id));
+    if (charInList) {
+        charInList.known_spells_count = knownSpells.length;
+        charInList.spellbooks_count = userSpellbooks.length;
+    }
+
+    // Update character card stats with live counts
+    updateCharacterCardStats();
+    
+    // Also update all cards on the list
+    updateAllCharacterCardStats();
+}
+
+function updateCharacterKnownSpellsList() {
+    characterKnownSpellsCount.textContent = knownSpells.length;
+
+    if (knownSpells.length === 0) {
+        characterKnownSpellsList.innerHTML = '<li style="color: var(--text-secondary); padding: 8px;">Brak znanych kantów.</li>';
+        return;
+    }
+
+    characterKnownSpellsList.innerHTML = knownSpells.map((spell, idx) => `
+        <li class="known-spell-item" draggable="true" data-spell-id="${spell.id}" data-index="${idx}">
+            <span class="drag-handle">☰</span>
+            <span class="known-spell-label">${spell.spell_name_pl} (${spell.spell_name_en})</span>
+            <button class="known-remove-btn" data-spell-id="${spell.id}">Usuń</button>
+        </li>
+    `).join('');
+
+    // Add remove handlers
+    characterKnownSpellsList.querySelectorAll('.known-remove-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const spellId = btn.getAttribute('data-spell-id');
+            await removeKnownSpell(spellId);
+            await loadCharacterData();
+        });
+    });
+
+    // Drag & drop reordering
+    initKnownSpellsDragDrop();
+}
+
+function initKnownSpellsDragDrop() {
+    let draggedEl = null;
+
+    characterKnownSpellsList.querySelectorAll('.known-spell-item[draggable]').forEach(item => {
+        item.addEventListener('dragstart', (e) => {
+            draggedEl = item;
+            item.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        });
+
+        item.addEventListener('dragend', () => {
+            if (draggedEl) draggedEl.classList.remove('dragging');
+            draggedEl = null;
+            characterKnownSpellsList.querySelectorAll('.known-spell-item').forEach(el => el.classList.remove('drag-over'));
+        });
+
+        item.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            if (item !== draggedEl) {
+                item.classList.add('drag-over');
+            }
+        });
+
+        item.addEventListener('dragleave', () => {
+            item.classList.remove('drag-over');
+        });
+
+        item.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            item.classList.remove('drag-over');
+            if (!draggedEl || draggedEl === item) return;
+
+            // Reorder DOM
+            const allItems = [...characterKnownSpellsList.querySelectorAll('.known-spell-item')];
+            const fromIdx = allItems.indexOf(draggedEl);
+            const toIdx = allItems.indexOf(item);
+            if (fromIdx < toIdx) {
+                item.after(draggedEl);
+            } else {
+                item.before(draggedEl);
+            }
+
+            // Persist new order to DB and local array
+            const reordered = [...characterKnownSpellsList.querySelectorAll('.known-spell-item')];
+            const updates = reordered.map((el, i) => {
+                const id = el.getAttribute('data-spell-id');
+                return { id, sort_order: i + 1 };  // 1-indexed
+            });
+
+            console.log('[Drag&Drop] Saving new order:', updates);
+
+            // Update local knownSpells array order
+            const idOrder = updates.map(u => u.id);
+            knownSpells.sort((a, b) => idOrder.indexOf(String(a.id)) - idOrder.indexOf(String(b.id)));
+            knownSpells.forEach((s, i) => { s.sort_order = i + 1; });
+
+            // Save to DB with error tracking
+            let hasErrors = false;
+            for (const u of updates) {
+                const { error } = await updateKnownSpellOrder(u.id, u.sort_order);
+                if (error) {
+                    console.error(`[Drag&Drop] Failed to save sort_order for spell ${u.id}:`, error);
+                    hasErrors = true;
+                } else {
+                    console.log(`[Drag&Drop] Saved sort_order=${u.sort_order} for spell ${u.id}`);
+                }
+            }
+
+            if (hasErrors) {
+                alert('Nie udało się zapisać nowej kolejności. Sprawdź konsolę.');
+                await loadCharacterData();  // Reload to restore previous order
+            }
+        });
+    });
+}
+
+function updateCharacterSpellbooksList() {
+    if (userSpellbooks.length === 0) {
+        characterSpellbooksList.innerHTML = '<p style="color: var(--text-secondary); padding: 8px;">Brak ksiąg.</p>';
+        return;
+    }
+
+    characterSpellbooksList.innerHTML = userSpellbooks.map(book => `
+        <div class="spellbook-item" data-spellbook-id="${book.id}">
+            <div class="spellbook-item-header">
+                <strong>${book.name}</strong>
+                <span class="spellbook-reliability">⭐ ${book.reliability}</span>
+            </div>
+        </div>
+    `).join('');
+
+    // Add click handlers to open spellbook details
+    characterSpellbooksList.querySelectorAll('.spellbook-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const spellbookId = item.getAttribute('data-spellbook-id');
+            console.log('[spellbook-click] Clicked spellbook ID:', spellbookId);
+            console.log('[spellbook-click] userSpellbooks:', userSpellbooks);
+            // Compare as string - IDs may be UUIDs or integers
+            const spellbook = userSpellbooks.find(b => String(b.id) === String(spellbookId));
+            console.log('[spellbook-click] Found spellbook:', spellbook);
+            if (spellbook) {
+                openSpellbookDetails(spellbook);
+            } else {
+                console.error('[spellbook-click] Spellbook not found for ID:', spellbookId);
+            }
+        });
+    });
+}
+
+// ============================
+// ADD KNOWN SPELL MODAL
+// ============================
+
+function renderAddKnownSpellResults() {
+    const searchTerm = addKnownSpellSearch.value.toLowerCase().trim();
+    
+    let filteredSpells = allSpells;
+    if (searchTerm) {
+        filteredSpells = allSpells.filter(spell => {
+            const namePL = (spell.NazwaPL || '').toLowerCase();
+            const nameEN = (spell.Nazwa || '').toLowerCase();
+            return namePL.includes(searchTerm) || nameEN.includes(searchTerm);
+        });
+    }
+
+    // Limit results to 50 for performance
+    const displaySpells = filteredSpells.slice(0, 50);
+
+    if (displaySpells.length === 0) {
+        addKnownSpellResults.innerHTML = '<p style="color: var(--text-secondary); padding: 10px;">Nie znaleziono zaklęć.</p>';
+        return;
+    }
+
+    addKnownSpellResults.innerHTML = displaySpells.map(spell => {
+        const isKnown = getKnownSpellEntry(spell);
+        return `
+            <div class="add-known-spell-item ${isKnown ? 'already-known' : ''}" data-spell-id="${spell.id}">
+                <div class="spell-info">
+                    <div class="spell-name">${spell.NazwaPL || spell.Nazwa}</div>
+                    <div class="spell-name-en">${spell.Nazwa || ''}</div>
+                </div>
+                ${!isKnown ? `<button class="btn-add-known">Dodaj</button>` : `<span class="already-known-badge">✓ Znane</span>`}
+            </div>
+        `;
+    }).join('');
+
+    // Add click handlers
+    addKnownSpellResults.querySelectorAll('.btn-add-known').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const item = e.target.closest('.add-known-spell-item');
+            const spellId = parseInt(item.getAttribute('data-spell-id'));
+            const spell = allSpells.find(s => s.id === spellId);
+            if (spell) {
+                await addKnownSpellToCharacter(currentCharacter.id, spell.NazwaPL || '', spell.Nazwa || '');
+                await loadCharacterData();
+                renderAddKnownSpellResults(); // Refresh list
+            }
+        });
+    });
+}
+
+// ============================
+// SPELLBOOK DETAILS WITH TABS
+// ============================
+
+function switchSpellbookTab(tabName) {
+    // Update tab buttons
+    spellbookTabButtons.forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.getAttribute('data-tab') === tabName) {
+            btn.classList.add('active');
+        }
+    });
+
+    // Hide all tabs
+    currentSpellsTab.classList.remove('active');
+    if (missingSpellsTab) missingSpellsTab.classList.remove('active');
+    availableSpellsTab.classList.remove('active');
+
+    // Show selected tab
+    if (tabName === 'current-spells') {
+        currentSpellsTab.classList.add('active');
+    } else if (tabName === 'missing-spells') {
+        if (missingSpellsTab) missingSpellsTab.classList.add('active');
+        renderMissingSpellsForSpellbook();
+    } else if (tabName === 'available-spells') {
+        availableSpellsTab.classList.add('active');
+        renderAvailableSpellsForSpellbook();
+    }
+}
+
+async function openSpellbookDetails(spellbook) {
+    currentSpellbook = spellbook;
+    
+    document.getElementById('spellbookDetailsTitle').textContent = spellbook.name;
+    document.getElementById('spellbookDetailsReliability').textContent = spellbook.reliability;
+
+    // Load and render present spells
+    await renderPresentSpellsForSpellbook();
+
+    // Switch to first tab and open modal
+    switchSpellbookTab('current-spells');
+    spellbookDetailsModal.style.display = 'block';
+}
+
+async function renderPresentSpellsForSpellbook() {
+    if (!currentSpellbook) return;
+
+    const { data: spells, error } = await getSpellbookSpells(currentSpellbook.id, 'present');
+    
+    const countEl = document.getElementById('spellbookDetailsCount');
+    const spellsContainer = document.getElementById('spellbookDetailsSpells');
+    
+    if (error || !spells) {
+        countEl.textContent = '0';
+        spellsContainer.innerHTML = '<p style="color:#ff6b6b;">Błąd ładowania.</p>';
+        return;
+    }
+    
+    countEl.textContent = spells.length;
+    
+    if (spells.length === 0) {
+        spellsContainer.innerHTML = '<p style="color: var(--text-secondary); padding: 10px;">Brak zaklęć w tej księdze.</p>';
+    } else {
+        spellsContainer.innerHTML = spells.map(spell => {
+            const label = spell.spell_name_pl || spell.spell_name_en || '-';
+            return `
+                <div class="spellbook-spell-item">
+                    <span class="spellbook-spell-name">${label}</span>
+                    <button class="spellbook-spell-remove" data-spell-id="${spell.id}">Usuń</button>
+                </div>
+            `;
+        }).join('');
+
+        spellsContainer.querySelectorAll('.spellbook-spell-remove').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const spellId = btn.getAttribute('data-spell-id');
+                const { error } = await removeSpellFromSpellbook(spellId);
+                if (!error) {
+                    await renderPresentSpellsForSpellbook();
+                } else {
+                    alert(`Błąd usuwania: ${error.message}`);
+                }
+            });
+        });
+    }
+}
+
+async function renderMissingSpellsForSpellbook() {
+    if (!currentSpellbook || !spellbookMissingSpells) return;
+
+    const { data: spells, error } = await getSpellbookSpells(currentSpellbook.id, 'missing');
+    
+    if (error || !spells) {
+        spellbookMissingSpells.innerHTML = '<p style="color:#ff6b6b;">Błąd ładowania.</p>';
+        return;
+    }
+    
+    if (spells.length === 0) {
+        spellbookMissingSpells.innerHTML = '<p style="color: var(--text-secondary); padding: 10px;">Brak oznaczonych brakujących zaklęć.</p>';
+    } else {
+        spellbookMissingSpells.innerHTML = spells.map(spell => {
+            const label = spell.spell_name_pl || spell.spell_name_en || '-';
+            return `
+                <div class="spellbook-spell-item missing-spell-item">
+                    <span class="spellbook-spell-name">${label}</span>
+                    <button class="spellbook-spell-remove" data-spell-id="${spell.id}">Usuń</button>
+                </div>
+            `;
+        }).join('');
+
+        spellbookMissingSpells.querySelectorAll('.spellbook-spell-remove').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const spellId = btn.getAttribute('data-spell-id');
+                const { error } = await removeSpellFromSpellbook(spellId);
+                if (!error) {
+                    await renderMissingSpellsForSpellbook();
+                } else {
+                    alert(`Błąd usuwania: ${error.message}`);
+                }
+            });
+        });
+    }
+}
+
+async function renderAvailableSpellsForSpellbook() {
+    if (!currentSpellbook) return;
+
+    const searchTerm = spellbookAvailableSearch.value.toLowerCase().trim();
+    
+    // Get ALL spells in spellbook (both present and missing) to exclude them
+    const { data: allBookSpells } = await getSpellbookSpells(currentSpellbook.id);
+    const bookSpellNames = new Set();
+    if (allBookSpells) {
+        allBookSpells.forEach(spell => {
+            if (spell.spell_name_pl) bookSpellNames.add(spell.spell_name_pl.toLowerCase());
+            if (spell.spell_name_en) bookSpellNames.add(spell.spell_name_en.toLowerCase());
+        });
+    }
+
+    // Filter: only spells not yet categorized in this spellbook
+    let availableSpells = allSpells.filter(spell => {
+        const namePL = (spell.NazwaPL || '').toLowerCase();
+        const nameEN = (spell.Nazwa || '').toLowerCase();
+        return !bookSpellNames.has(namePL) && !bookSpellNames.has(nameEN);
+    });
+
+    if (searchTerm) {
+        availableSpells = availableSpells.filter(spell => {
+            const namePL = (spell.NazwaPL || '').toLowerCase();
+            const nameEN = (spell.Nazwa || '').toLowerCase();
+            return namePL.includes(searchTerm) || nameEN.includes(searchTerm);
+        });
+    }
+
+    const displaySpells = availableSpells.slice(0, 50);
+
+    if (displaySpells.length === 0) {
+        spellbookAvailableSpells.innerHTML = '<p style="color: var(--text-secondary); padding: 10px;">Nie znaleziono zaklęć.</p>';
+        return;
+    }
+
+    spellbookAvailableSpells.innerHTML = displaySpells.map(spell => `
+        <div class="available-spell-item" data-spell-id="${spell.id}">
+            <div class="spell-info">
+                <div class="spell-name">${spell.NazwaPL || spell.Nazwa}</div>
+                <div class="spell-name-en">${spell.Nazwa || ''}</div>
+            </div>
+            <div class="spell-status-buttons">
+                <button class="btn-mark-present" title="Zaklęcie jest w księdze">✅ W księdze</button>
+                <button class="btn-mark-missing" title="Zaklęcia brakuje w księdze">❌ Brak</button>
+            </div>
+        </div>
+    `).join('');
+
+    // Add click handlers for "present" buttons
+    spellbookAvailableSpells.querySelectorAll('.btn-mark-present').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const item = e.target.closest('.available-spell-item');
+            await addSpellToBookWithStatus(item, 'present', btn);
+        });
+    });
+
+    // Add click handlers for "missing" buttons
+    spellbookAvailableSpells.querySelectorAll('.btn-mark-missing').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const item = e.target.closest('.available-spell-item');
+            await addSpellToBookWithStatus(item, 'missing', btn);
+        });
+    });
+}
+
+async function addSpellToBookWithStatus(itemEl, status, btn) {
+    const spellId = itemEl.getAttribute('data-spell-id');
+    const spell = allSpells.find(s => String(s.id) === String(spellId));
+    
+    if (!spell) return;
+
+    // Disable buttons during operation
+    const buttons = itemEl.querySelectorAll('button');
+    buttons.forEach(b => b.disabled = true);
+    btn.textContent = '⏳';
+
+    try {
+        const { data, error } = await addSpellToSpellbook(
+            currentSpellbook.id,
+            spell.NazwaPL || '',
+            spell.Nazwa || '',
+            status
+        );
+
+        if (error) {
+            if (error.code === '23505') {
+                alert('To zaklęcie jest już w tej księdze!');
+            } else {
+                alert(`Błąd: ${error.message}`);
+            }
+            buttons.forEach(b => b.disabled = false);
+            btn.textContent = status === 'present' ? '✅ W księdze' : '❌ Brak';
+            return;
+        }
+
+        // Remove the item from the list with animation
+        itemEl.style.opacity = '0.3';
+        itemEl.style.transition = 'opacity 0.3s';
+        setTimeout(() => itemEl.remove(), 300);
+
+        // Update present spells count
+        const { data: presentSpells } = await getSpellbookSpells(currentSpellbook.id, 'present');
+        if (presentSpells) {
+            document.getElementById('spellbookDetailsCount').textContent = presentSpells.length;
+        }
+
+    } catch (err) {
+        alert('Nie udało się dodać czaru');
+        buttons.forEach(b => b.disabled = false);
+        btn.textContent = status === 'present' ? '✅ W księdze' : '❌ Brak';
+    }
+}
+
+async function handleDeleteSpellbook() {
+    if (!currentSpellbook) return;
+
+    if (confirm(`Czy na pewno chcesz usunąć księgę "${currentSpellbook.name}"?`)) {
+        const { error } = await deleteSpellbook(currentSpellbook.id);
+        if (error) {
+            alert(`Błąd usuwania księgi: ${error.message}`);
+            return;
+        }
+
+        spellbookDetailsModal.style.display = 'none';
+        currentSpellbook = null;
+        await loadCharacterData();
+    }
+}
+
+async function handleCreateCharacter(e) {
+    e.preventDefault();
+    
+    const name = newCharacterName.value.trim();
+    const imageUrl = newCharacterImageUrl.value.trim() || null;
+
+    const errorDiv = document.getElementById('createCharacterError');
+    const successDiv = document.getElementById('createCharacterSuccess');
+
+    errorDiv.style.display = 'none';
+    successDiv.style.display = 'none';
+
+    if (!name) {
+        errorDiv.textContent = 'Imię postaci jest wymagane.';
+        errorDiv.style.display = 'block';
+        return;
+    }
+
+    const { data, error } = await createCharacter(currentUser.id, name, imageUrl);
+
+    if (error) {
+        errorDiv.textContent = `Błąd: ${error.message}`;
+        errorDiv.style.display = 'block';
+        return;
+    }
+
+    successDiv.textContent = 'Postać utworzona pomyślnie!';
+    successDiv.style.display = 'block';
+
+    createCharacterForm.reset();
+    
+    setTimeout(() => {
+        createCharacterModal.style.display = 'none';
+        successDiv.style.display = 'none';
+    }, 1500);
+
+    await loadCharacters();
+}
+
+async function handleEditCharacterName(e) {
+    e.preventDefault();
+    
+    const name = editCharacterNameInput.value.trim();
+    const errorDiv = document.getElementById('editCharacterNameError');
+
+    errorDiv.style.display = 'none';
+
+    if (!name) {
+        errorDiv.textContent = 'Imię postaci jest wymagane.';
+        errorDiv.style.display = 'block';
+        return;
+    }
+
+    const { data, error } = await updateCharacter(currentCharacter.id, { name });
+
+    if (error) {
+        errorDiv.textContent = `Błąd: ${error.message}`;
+        errorDiv.style.display = 'block';
+        return;
+    }
+
+    currentCharacter.name = name;
+    editCharacterNameModal.style.display = 'none';
+    updateCharacterManagementView();
+    await loadCharacters();
+}
+
+async function handleChangeCharacterImage(e) {
+    e.preventDefault();
+    
+    const imageUrl = editCharacterImageUrl.value.trim() || null;
+    const errorDiv = document.getElementById('changeCharacterImageError');
+
+    errorDiv.style.display = 'none';
+
+    const { data, error } = await updateCharacter(currentCharacter.id, { image_url: imageUrl });
+
+    if (error) {
+        errorDiv.textContent = `Błąd: ${error.message}`;
+        errorDiv.style.display = 'block';
+        return;
+    }
+
+    currentCharacter.image_url = imageUrl;
+    changeCharacterImageModal.style.display = 'none';
+    updateCharacterManagementView();
+    await loadCharacters();
+}
+
 // checkUserOnLoad is no longer needed - setupAuthStateListener handles everything
 // onAuthStateChange fires INITIAL_SESSION on page load which triggers loadUserData
 
@@ -1224,11 +2325,8 @@ async function loadUserData(user) {
     // Update UI with admin status
     updateAuthUI(currentUser);
     
-    // Load known spells and spellbooks IN PARALLEL
-    await Promise.all([
-        loadKnownSpells(),
-        loadSpellbooks()
-    ]);
+    // Load characters (known spells and spellbooks are loaded per-character)
+    await loadCharacters();
     
     const elapsed = (performance.now() - start).toFixed(0);
     console.log(`[loadUserData] DONE in ${elapsed}ms`);
@@ -1436,8 +2534,21 @@ async function toggleKnownSpell(spell) {
         return;
     }
 
+    // Check if we have a current character, otherwise try to use the first one
+    if (!currentCharacter) {
+        if (userCharacters.length === 0) {
+            alert('Utwórz kanciarza w Biurze Szeryfa, aby dodawać znane kanty.');
+            return;
+        } else if (userCharacters.length === 1) {
+            // Auto-select the only character
+            currentCharacter = userCharacters[0];
+        } else {
+            alert('Wybierz kanciarza w Biurze Szeryfa przed dodaniem kanta.');
+            return;
+        }
+    }
+
     knownSpellActionInProgress = true;
-    setKnownSpellsFeedback('Zapisywanie zmian...', false);
 
     const toggleKnownSpellBtn = document.getElementById('toggleKnownSpellBtn');
     if (toggleKnownSpellBtn) {
@@ -1450,25 +2561,27 @@ async function toggleKnownSpell(spell) {
         const { error } = await removeKnownSpell(existingEntry.id);
         if (error) {
             console.error('Błąd usuwania znanego zaklęcia:', error);
-            setKnownSpellsFeedback(`Nie udało się usunąć: ${error.message || 'nieznany błąd'}`, true);
+            alert(`Nie udało się usunąć: ${error.message || 'nieznany błąd'}`);
             knownSpellActionInProgress = false;
             if (toggleKnownSpellBtn) toggleKnownSpellBtn.disabled = false;
             return;
         }
-        setKnownSpellsFeedback('Usunięto ze znanych.', false);
     } else {
-        const { error } = await addKnownSpell(currentUser.id, spell.NazwaPL || '', spell.Nazwa || '');
+        const { error } = await addKnownSpellToCharacter(currentCharacter.id, spell.NazwaPL || '', spell.Nazwa || '');
         if (error) {
             console.error('Błąd dodawania znanego zaklęcia:', error);
-            setKnownSpellsFeedback(`Nie udało się dodać: ${error.message || 'nieznany błąd'}`, true);
+            alert(`Nie udało się dodać: ${error.message || 'nieznany błąd'}`);
             knownSpellActionInProgress = false;
             if (toggleKnownSpellBtn) toggleKnownSpellBtn.disabled = false;
             return;
         }
-        setKnownSpellsFeedback('Dodano do znanych.', false);
     }
 
-    await loadKnownSpells();
+    // Reload character data if we're in character details view
+    if (currentCharacter && characterDetailsView.style.display !== 'none') {
+        await loadCharacterData();
+    }
+
     knownSpellActionInProgress = false;
     if (toggleKnownSpellBtn) toggleKnownSpellBtn.disabled = false;
 }
@@ -1669,7 +2782,8 @@ async function loadSpellbookSpellCount(spellbookId) {
 async function handleCreateSpellbook(e) {
     e.preventDefault();
     
-    if (!currentUser) {
+    if (!currentUser || !currentCharacter) {
+        showSpellbookMessage('Wybierz kanciarza, aby utworzyć księgę Hoyla.', true);
         return;
     }
 
@@ -1682,14 +2796,14 @@ async function handleCreateSpellbook(e) {
     }
 
     try {
-        const { data, error } = await createSpellbook(currentUser.id, name, reliability);
+        const { data, error } = await createSpellbookForCharacter(currentCharacter.id, name, reliability);
         if (error) {
             console.error('[handleCreateSpellbook] Error:', error);
             showSpellbookMessage(`Błąd: ${error.message}`, true);
             return;
         }
 
-        showSpellbookMessage('Księga utworzona!', false);
+        showSpellbookMessage('Księga Hoyla utworzona!', false);
         spellbookNameInput.value = '';
         spellbookReliabilityInput.value = '1';
         reliabilityValueDisplay.textContent = '1';
@@ -1698,7 +2812,7 @@ async function handleCreateSpellbook(e) {
             createSpellbookModal.style.display = 'none';
         }, 1000);
 
-        await loadSpellbooks();
+        await loadCharacterData();
     } catch (error) {
         console.error('[handleCreateSpellbook] Catch error:', error);
         showSpellbookMessage('Nie udało się utworzyć księgi.', true);
@@ -1725,115 +2839,45 @@ function showSpellbookMessage(message, isError = false) {
     }, 3000);
 }
 
-async function viewSpellbookDetails(spellbookId) {
-    const spellbook = userSpellbooks.find(b => b.id == spellbookId);
-    if (!spellbook) return;
-
-    // Set header info
-    document.getElementById('spellbookDetailsTitle').textContent = spellbook.name;
-    document.getElementById('spellbookDetailsReliability').textContent = spellbook.reliability || 1;
-
-    // Load spells in this spellbook
-    try {
-        const { data, error } = await getSpellbookSpells(spellbookId);
-        if (error) {
-            console.error('[viewSpellbookDetails] Error loading spells:', error);
-            return;
-        }
-
-        const spells = data || [];
-        document.getElementById('spellbookDetailsCount').textContent = spells.length;
-
-        const spellsContainer = document.getElementById('spellbookDetailsSpells');
-        if (spells.length === 0) {
-            spellsContainer.innerHTML = '<p style="color: var(--text-secondary);">Brak zaklęć w tej księdze.</p>';
-        } else {
-            spellsContainer.innerHTML = spells.map(spell => {
-                const label = spell.spell_name_pl || spell.spell_name_en || '-';
-                return `
-                    <div class="spellbook-spell-item">
-                        <span class="spellbook-spell-name">${label}</span>
-                        <button class="spellbook-spell-remove" data-spell-id="${spell.id}">Usuń</button>
-                    </div>
-                `;
-            }).join('');
-
-            // Add remove handlers
-            spellsContainer.querySelectorAll('.spellbook-spell-remove').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
-                    e.stopPropagation();
-                    const spellId = btn.getAttribute('data-spell-id');
-                    await removeSpellFromSpellbook(spellbookId, spellId);
-                });
-            });
-        }
-
-        // Set up delete spellbook button
-        const deleteBtn = document.getElementById('deleteSpellbookBtn');
-        deleteBtn.onclick = async () => {
-            if (confirm(`Czy na pewno chcesz usunąć księgę "${spellbook.name}"?`)) {
-                await handleDeleteSpellbook(spellbookId);
-            }
-        };
-
-        spellbookDetailsModal.style.display = 'block';
-    } catch (error) {
-        console.error('[viewSpellbookDetails] Catch error:', error);
+function openAddToSpellbookModal(spell) {
+    if (!currentUser || !currentCharacter) {
+        alert('Wybierz kanciarza w Biurze Szeryfa, aby dodać kant do księgi.');
+        return;
     }
-}
 
-async function removeSpellFromSpellbook(spellbookId, spellId) {
-    try {
-        const { error } = await supabase
-            .from('spellbook_spells')
-            .delete()
-            .eq('id', spellId);
-
-        if (error) {
-            console.error('[removeSpellFromSpellbook] Error:', error);
-            return;
-        }
-
-        // Refresh the details view
-        await viewSpellbookDetails(spellbookId);
-        await loadSpellbooks(); // Refresh counts
-    } catch (error) {
-        console.error('[removeSpellFromSpellbook] Catch error:', error);
+    if (userSpellbooks.length === 0) {
+        alert('Najpierw utwórz księgę w sekcji Zarządzanie!');
+        return;
     }
-}
 
-async function handleDeleteSpellbook(spellbookId) {
-    try {
-        // First delete all spells in this spellbook
-        const { error: spellsError } = await supabase
-            .from('spellbook_spells')
-            .delete()
-            .eq('spellbook_id', spellbookId);
+    currentSpellForSpellbook = spell;
+    
+    const spellNameDisplay = document.getElementById('addToSpellbookSpellName');
+    spellNameDisplay.textContent = `"${spell.NazwaPL || spell.Nazwa || '-'}"`;
 
-        if (spellsError) {
-            console.error('[handleDeleteSpellbook] Error deleting spells:', spellsError);
-            alert('Nie udało się usunąć zaklęć z księgi.');
-            return;
-        }
+    const selectionList = document.getElementById('spellbookSelectionList');
+    selectionList.innerHTML = userSpellbooks.map(book => {
+        return `
+            <div class="spellbook-selection-item" data-id="${book.id}">
+                <span class="spellbook-selection-name">${book.name}</span>
+                <div>
+                    <span class="spellbook-selection-reliability">Niez.: ${book.reliability}</span>
+                    <button class="btn-add-to-spellbook-final" data-book-id="${book.id}">Dodaj</button>
+                </div>
+            </div>
+        `;
+    }).join('');
 
-        // Then delete the spellbook itself
-        const { error: bookError } = await supabase
-            .from('spellbooks')
-            .delete()
-            .eq('id', spellbookId);
+    // Add click handlers
+    selectionList.querySelectorAll('.btn-add-to-spellbook-final').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const bookId = btn.getAttribute('data-book-id');
+            await addSpellToSelectedSpellbook(bookId);
+        });
+    });
 
-        if (bookError) {
-            console.error('[handleDeleteSpellbook] Error deleting spellbook:', bookError);
-            alert('Nie udało się usunąć księgi.');
-            return;
-        }
-
-        spellbookDetailsModal.style.display = 'none';
-        await loadSpellbooks();
-    } catch (error) {
-        console.error('[handleDeleteSpellbook] Catch error:', error);
-        alert('Wystąpił błąd podczas usuwania księgi.');
-    }
+    addToSpellbookModal.style.display = 'block';
 }
 
 function handleAddToSpellbook(spell) {
@@ -1919,4 +2963,224 @@ async function addSpellToSelectedSpellbook(spellbookId) {
         messageEl.textContent = 'Nie udało się dodać.';
         messageEl.style.color = '#ff6b6b';
     }
+}
+// ===================================
+// Preview/Export Functions
+// ===================================
+
+// Shared function to enrich a spell name reference with full data from allSpells
+function enrichSpellByName(spellNamePl, spellNameEn) {
+    const namePL = (spellNamePl || '').toLowerCase();
+    const nameEN = (spellNameEn || '').toLowerCase();
+    return allSpells.find(spell => {
+        const spellNamePL = (spell.NazwaPL || '').toLowerCase();
+        const spellNameEN = (spell.Nazwa || '').toLowerCase();
+        return (namePL && spellNamePL === namePL) || (nameEN && spellNameEN === nameEN);
+    }) || null;
+}
+
+// Render a single spell block with compressed stats + poker hands
+function renderPreviewSpellBlock(spell, index) {
+    if (!spell) return '';
+    
+    const isKant = spell.type === 'kant';
+    const typeName = isKant ? 'Kant' : 'Sztuczka';
+    
+    let html = `
+        <div class="preview-spell-item">
+            <div class="preview-spell-header">
+                <h3>${index + 1}. ${spell.NazwaPL || spell.Nazwa || '?'}</h3>
+                <span class="preview-spell-type ${isKant ? 'type-kant' : 'type-sztuczka'}">${typeName}</span>
+            </div>
+            ${spell.NazwaPL && spell.Nazwa ? `<p class="preview-spell-name-en">${spell.Nazwa}</p>` : ''}
+            
+            <div class="preview-spell-stats">
+                <div class="preview-stat"><span class="preview-stat-label">Źródło</span><span class="preview-stat-value">${spell['Źródło'] || '-'}</span></div>
+                <div class="preview-stat"><span class="preview-stat-label">Cecha</span><span class="preview-stat-value">${spell.Cecha || '-'}</span></div>`;
+    
+    if (isKant) {
+        html += `
+                <div class="preview-stat"><span class="preview-stat-label">Min. Ręka</span><span class="preview-stat-value">${spell['Min. Ręka'] || '-'}</span></div>
+                <div class="preview-stat"><span class="preview-stat-label">Rzucanie</span><span class="preview-stat-value">${spell.Rzucanie || '-'}</span></div>
+                <div class="preview-stat"><span class="preview-stat-label">Czas</span><span class="preview-stat-value">${spell.Czas || '-'}</span></div>
+                <div class="preview-stat"><span class="preview-stat-label">Zasięg</span><span class="preview-stat-value">${spell['Zasięg'] || '-'}</span></div>`;
+    }
+    
+    html += `</div>`;
+    
+    // Description
+    if (spell.Opis) {
+        html += `<div class="preview-spell-description">${spell.Opis}</div>`;
+    }
+    
+    // Poker hand effects table — show only hands with effects
+    if (isKant) {
+        const effects = HAND_NAMES.filter(hand => spell[hand] && spell[hand].trim() !== '');
+        if (effects.length > 0) {
+            html += `<table class="preview-effects-table">
+                        <thead><tr><th>Ręka</th><th>Efekt</th></tr></thead>
+                        <tbody>`;
+            effects.forEach(hand => {
+                html += `<tr><td class="preview-hand-name">${hand}</td><td>${spell[hand]}</td></tr>`;
+            });
+            html += `</tbody></table>`;
+        }
+    }
+    
+    html += `</div>`;
+    return html;
+}
+
+async function handlePreviewKnownSpells() {
+    if (!currentCharacter) {
+        alert('Wybierz najpierw postać');
+        return;
+    }
+
+    previewTitle.textContent = `Znane Kanty: ${currentCharacter.name}`;
+    
+    const { data: knownSpellsData, error } = await getKnownSpellsForCharacter(currentCharacter.id);
+    
+    if (error) {
+        previewContent.innerHTML = '<p style="color: #ff6b6b;">Błąd podczas ładowania czarów.</p>';
+        previewExportModal.style.display = 'flex';
+        return;
+    }
+
+    if (!knownSpellsData || knownSpellsData.length === 0) {
+        previewContent.innerHTML = '<p>Brak znanych czarów dla tej postaci.</p>';
+        previewExportModal.style.display = 'flex';
+        return;
+    }
+
+    const fullSpells = knownSpellsData
+        .map(ks => enrichSpellByName(ks.spell_name_pl, ks.spell_name_en))
+        .filter(Boolean);
+
+    let html = '<div class="preview-spells-list">';
+    fullSpells.forEach((spell, i) => { html += renderPreviewSpellBlock(spell, i); });
+    html += '</div>';
+    
+    previewContent.innerHTML = html;
+    previewExportModal.style.display = 'flex';
+}
+
+async function handlePreviewSpellbook() {
+    if (!currentSpellbook) {
+        alert('Nie wybrano księgi do podglądu');
+        return;
+    }
+
+    previewTitle.textContent = `Księga: ${currentSpellbook.name} (Niezawodność: ${currentSpellbook.reliability})`;
+    
+    const { data: presentSpells } = await getSpellbookSpells(currentSpellbook.id, 'present');
+    const { data: missingSpells } = await getSpellbookSpells(currentSpellbook.id, 'missing');
+
+    const sortAlpha = (a, b) => (a.spell_name_pl || a.spell_name_en || '').localeCompare(b.spell_name_pl || b.spell_name_en || '');
+    const present = (presentSpells || []).sort(sortAlpha);
+    const missing = (missingSpells || []).sort(sortAlpha);
+
+    if (present.length === 0 && missing.length === 0) {
+        previewContent.innerHTML = '<p>Brak czarów w tej księdze.</p>';
+        previewExportModal.style.display = 'flex';
+        return;
+    }
+
+    const renderNameList = (spells) => {
+        if (spells.length === 0) return '<p style="color:var(--text-secondary);font-style:italic;margin:4px 0;">Brak</p>';
+        let ol = '<ol>';
+        spells.forEach(s => {
+            const pl = s.spell_name_pl || '';
+            const en = s.spell_name_en || '';
+            ol += `<li>${pl}${en ? ` <span class="spell-en">(${en})</span>` : ''}</li>`;
+        });
+        ol += '</ol>';
+        return ol;
+    };
+
+    let html = `<div class="preview-book-columns">
+        <div class="preview-book-col">
+            <h3 class="col-present">✅ W księdze (${present.length})</h3>
+            ${renderNameList(present)}
+        </div>
+        <div class="preview-book-col">
+            <h3 class="col-missing">❌ Brak w księdze (${missing.length})</h3>
+            ${renderNameList(missing)}
+        </div>
+    </div>`;
+
+    previewContent.innerHTML = html;
+    previewExportModal.style.display = 'flex';
+}
+
+function handleExportToPDF() {
+    const printWindow = window.open('', '_blank');
+    
+    if (!printWindow) {
+        alert('Proszę zezwolić na wyskakujące okna dla eksportu PDF');
+        return;
+    }
+    
+    const title = previewTitle.textContent;
+    const content = previewContent.innerHTML;
+    
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>${title}</title>
+            <style>
+                * { box-sizing: border-box; }
+                body { font-family: 'Segoe UI', Arial, sans-serif; margin: 20px; color: #222; }
+                h1 { color: #333; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+                
+                /* Spellbook two-column layout */
+                .preview-book-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+                .preview-book-col { border: 1px solid #ddd; border-radius: 6px; padding: 14px 18px; }
+                .preview-book-col h3 { margin: 0 0 10px; font-size: 1.05em; padding-bottom: 8px; border-bottom: 1px solid #ddd; }
+                .preview-book-col h3.col-present { color: #2e7d32; }
+                .preview-book-col h3.col-missing { color: #c62828; }
+                .preview-book-col ol { margin: 0; padding-left: 22px; }
+                .preview-book-col li { font-size: 0.92em; padding: 2px 0; }
+                .preview-book-col li .spell-en { color: #888; font-style: italic; font-size: 0.85em; }
+
+                /* Known spells detail cards */
+                .preview-spell-item { margin-bottom: 20px; padding: 14px; border: 1px solid #ddd; border-radius: 6px; page-break-inside: avoid; }
+                .preview-spell-header { display: flex; justify-content: space-between; align-items: center; }
+                .preview-spell-header h3 { margin: 0; color: #1565c0; font-size: 1.05em; }
+                .preview-spell-type { font-size: 0.72em; font-weight: 700; padding: 3px 8px; border-radius: 3px; text-transform: uppercase; }
+                .type-kant { background: #e3f2fd; color: #1565c0; }
+                .type-sztuczka { background: #f3e5f5; color: #7b1fa2; }
+                .preview-spell-name-en { color: #666; font-style: italic; margin: 2px 0 6px; font-size: 0.88em; }
+                
+                .preview-spell-stats { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 6px 0; padding: 6px 10px; background: #f5f5f5; border-radius: 4px; font-size: 0.85em; }
+                .preview-stat { display: flex; align-items: baseline; gap: 4px; }
+                .preview-stat-label { font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.4px; color: #888; font-weight: 600; }
+                .preview-stat-label::after { content: ':'; }
+                .preview-stat-value { font-weight: 500; color: #333; }
+                
+                .preview-spell-description { margin: 6px 0; padding: 8px 10px; background: #fafafa; border-left: 3px solid #1565c0; font-size: 0.88em; line-height: 1.45; }
+                
+                .preview-effects-table { width: 100%; border-collapse: collapse; font-size: 0.85em; margin-top: 6px; }
+                .preview-effects-table th { text-align: left; background: #e8eaf6; padding: 4px 8px; border: 1px solid #c5cae9; font-size: 0.82em; }
+                .preview-effects-table td { padding: 4px 8px; border: 1px solid #e0e0e0; vertical-align: top; line-height: 1.3; }
+                .preview-hand-name { font-weight: 600; white-space: nowrap; width: 110px; color: #333; }
+                
+                @media print {
+                    body { margin: 0; }
+                    .preview-spell-item { page-break-inside: avoid; }
+                    .preview-book-columns { page-break-inside: avoid; }
+                }
+            </style>
+        </head>
+        <body>
+            <h1>${title}</h1>
+            ${content}
+        </body>
+        </html>
+    `);
+    
+    printWindow.document.close();
+    printWindow.onload = function() { printWindow.print(); };
 }

@@ -26,35 +26,37 @@
             </div>
         </header>
 
-        <!-- Nawigacja zakładek -->
-        <div class="tabs-navigation">
-            <button class="tab-btn active" data-tab="card-view">🎴 Widok Karciany</button>
-            <button class="tab-btn" data-tab="table-view">📋 Tabela</button>
-            <button class="tab-btn" data-tab="manage-view" id="manageTabBtn" style="display: none;">⚙️ Zarządzanie</button>
-            <button id="addSpellBtn" class="btn-add-spell" style="display: none;">✨ Dodaj Kant</button>
-        </div>
+        <!-- Main layout with sidebar -->
+        <div class="main-layout">
+            <!-- Sidebar Navigation -->
+            <aside class="sidebar">
+                <nav class="sidebar-nav">
+                    <button class="sidebar-btn active" data-view="card-view">
+                        <span class="sidebar-icon">🎴</span>
+                        <span class="sidebar-label">Stół Karciany</span>
+                    </button>
+                    <button class="sidebar-btn" data-view="table-view">
+                        <span class="sidebar-icon">📋</span>
+                        <span class="sidebar-label">Rejestr Kantów</span>
+                    </button>
+                    <button class="sidebar-btn" data-view="manage-view" id="manageSidebarBtn">
+                        <span class="sidebar-icon">⚙️</span>
+                        <span class="sidebar-label">Biuro Szeryfa</span>
+                    </button>
+                </nav>
+                <div class="sidebar-footer">
+                    <button id="addSpellBtn" class="btn-add-spell" style="display: none;">
+                        <span>✨</span>
+                        <span>Dodaj Kant</span>
+                    </button>
+                </div>
+            </aside>
 
-        <div id="knownSpellsPanel" class="known-spells-panel" style="display: none;">
-            <div class="known-spells-header">
-                <h3>Znane Zaklęcia</h3>
-                <span id="knownSpellsCount" class="known-count">0</span>
-            </div>
-            <p id="knownSpellsHint" class="known-spells-hint">Zaloguj się, aby zarządzać listą znanych zaklęć.</p>
-            <ul id="knownSpellsList" class="known-spells-list"></ul>
-        </div>
+            <!-- Main Content Area -->
+            <main class="main-content">
 
-        <!-- Spellbooks Panel -->
-        <div id="spellbooksPanel" class="spellbooks-panel" style="display: none;">
-            <div class="spellbooks-header">
-                <h3>Księgi Hoyla</h3>
-                <button id="createSpellbookBtn" class="btn-create-spellbook">+ Nowa Księga</button>
-            </div>
-            <p id="spellbooksHint" class="spellbooks-hint">Zaloguj się, aby zarządzać księgami zaklęć.</p>
-            <div id="spellbooksList" class="spellbooks-list"></div>
-        </div>
-
-        <!-- Widok Karciany -->
-        <div id="card-view" class="view-section active">
+                <!-- Widok Karciany -->
+                <div id="card-view" class="view-section active">
             <!-- Omnibox Search -->
             <div class="omnibox-container card-search-container">
                 <div class="search-box card-search-box">
@@ -69,38 +71,37 @@
                 <div class="omnibox-suggestions" id="omniboxSuggestions"></div>
             </div>
 
-            <!-- Karciany widok - pojedyncza karta -->
-            <div class="card-display-container">
-                <div class="game-card" id="gameCard">
-                    <div class="loading-card">Ładowanie danych...</div>
+                    <!-- Karciany widok - pojedyncza karta -->
+                    <div class="card-display-container">
+                        <div class="game-card" id="gameCard">
+                            <div class="loading-card">Ładowanie danych...</div>
+                        </div>
+
+
+                    </div>
                 </div>
 
+                <div id="table-view" class="view-section">
+                    <div class="controls-panel">
+                        <!-- Wyszukiwanie -->
+                        <div class="search-box">
+                            <input 
+                                type="text" 
+                                id="searchInput" 
+                                placeholder="Szukaj po angielskiej lub polskiej nazwie..."
+                                class="search-input"
+                            >
+                            <span class="search-icon">🔍</span>
+                        </div>
 
-            </div>
-        </div>
-
-        <!-- Widok Tabelaryczny -->
-        <div id="table-view" class="view-section">
-            <div class="controls-panel">
-                <!-- Wyszukiwanie -->
-                <div class="search-box">
-                    <input 
-                        type="text" 
-                        id="searchInput" 
-                        placeholder="Szukaj po angielskiej lub polskiej nazwie..."
-                        class="search-input"
-                    >
-                    <span class="search-icon">🔍</span>
-                </div>
-
-                <!-- Filtry -->
-                <div class="filters">
-                    <div class="filter-group">
-                        <label for="typeFilter">Typ:</label>
-                        <select id="typeFilter" class="filter-select">
+                        <!-- Filtry -->
+                        <div class="filters">
+                            <div class="filter-group">
+                                <label for="typeFilter">Typ:</label>
+                                <select id="typeFilter" class="filter-select">
                             <option value="">Wszystkie</option>
                             <option value="kant">Kanty</option>
-                            <option value="sztuka">Sztuczki</option>
+                            <option value="sztuczka">Sztuczki</option>
                         </select>
                     </div>
 
@@ -152,53 +153,159 @@
                 </table>
             </div>
         </div>
-
-        <!-- Panel Zarządzania -->
-        <div id="manage-view" class="view-section">
-            <div class="manage-panel">
-                <div class="manage-header">
-                    <h2>⚙️ Zarządzanie Kantami</h2>
-                    <span id="manageRoleBadge" class="role-badge"></span>
-                </div>
-                <p class="manage-description" id="manageDescription"></p>
-
-                <!-- Search & filter -->
-                <div class="manage-toolbar">
-                    <div class="search-box manage-search">
-                        <input type="text" id="manageSearchInput" placeholder="🔍 Szukaj kanta do edycji..." class="search-input">
+                <!-- Panel Zarządzania -->
+                <div id="manage-view" class="view-section">
+                    <!-- Character Selection / Management -->
+                    <div class="character-management">
+                        <div class="character-selection-header">
+                            <h2>Kanciarze</h2>
+                            <button id="createCharacterBtn" class="btn-create-character">+ Nowy Kanciarz</button>
+                        </div>
+                        <p id="characterHint" class="character-hint">Zaloguj się, aby zarządzać postaciami.</p>
+                        <div id="charactersList" class="characters-list"></div>
                     </div>
-                    <div class="manage-filter-group">
-                        <label for="manageTypeFilter">Typ:</label>
-                        <select id="manageTypeFilter" class="filter-select">
-                            <option value="">Wszystkie</option>
-                            <option value="kant">Kanty</option>
-                            <option value="sztuka">Sztuczki</option>
-                        </select>
+
+                    <!-- Character Details View (visible when character is selected) -->
+                    <div id="characterDetailsView" class="character-details-view" style="display: none;">
+                        <div class="character-header">
+                            <div class="character-info">
+                                <div class="character-image-container">
+                                    <img id="characterImage" src="" alt="Character" class="character-image">
+                                    <button id="changeCharacterImageBtn" class="btn-change-image">📷</button>
+                                </div>
+                                <div class="character-name-section">
+                                    <h2 id="characterName">Imię Kanciarza</h2>
+                                    <button id="editCharacterNameBtn" class="btn-edit-name">✏️</button>
+                                </div>
+                            </div>
+                            <button id="backToCharactersBtn" class="btn-back">← Powrót do listy kanciarzy</button>
+                        </div>
+
+                        <!-- Known Spells for Character -->
+                        <div class="character-section">
+                            <div class="section-header">
+                                <h3>Znane Kanty</h3>
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    <span id="characterKnownSpellsCount" class="known-count">0</span>
+                                    <button id="addKnownSpellBtn" class="btn-create-spellbook">+ Dodaj Kant</button>
+                                    <button id="previewKnownSpellsBtn" class="btn-preview-export">📝 Podgląd/PDF</button>
+                                </div>
+                            </div>
+                            <ul id="characterKnownSpellsList" class="known-spells-list"></ul>
+                        </div>
+
+                        <!-- Spellbooks for Character -->
+                        <div class="character-section">
+                            <div class="section-header">
+                                <h3>Księgi Hoyla</h3>
+                                <div style="display: flex; gap: 10px;">
+                                    <button id="createCharacterSpellbookBtn" class="btn-create-spellbook">+ Nowa Księga</button>
+                                </div>
+                            </div>
+                            <div id="characterSpellbooksList" class="spellbooks-list"></div>
+                        </div>
                     </div>
-                    <div class="manage-filter-group" id="manageOwnerFilterGroup" style="display: none;">
-                        <label for="manageOwnerFilter">Autor:</label>
-                        <select id="manageOwnerFilter" class="filter-select">
-                            <option value="">Wszyscy</option>
-                            <option value="base">Bazowe (bez autora)</option>
-                            <option value="user">Dodane przez użytkowników</option>
-                        </select>
+
+                    <!-- Admin Spell Management (only for admins) -->
+                    <div id="adminSpellManagement" class="admin-spell-management" style="display: none;">
+                        <div class="manage-header">
+                            <h2>⚙️ Biuro Szeryfa Kantów</h2>
+                            <span id="manageRoleBadge" class="role-badge"></span>
+                        </div>
+                        <p class="manage-description" id="manageDescription"></p>
+
+                        <!-- Search & filter -->
+                        <div class="manage-toolbar">
+                            <div class="search-box manage-search">
+                                <input type="text" id="manageSearchInput" placeholder="🔍 Szukaj kanta do edycji..." class="search-input">
+                            </div>
+                            <div class="manage-filter-group">
+                                <label for="manageTypeFilter">Typ:</label>
+                                <select id="manageTypeFilter" class="filter-select">
+                                    <option value="">Wszystkie</option>
+                                    <option value="kant">Kanty</option>
+                                    <option value="sztuczka">Sztuczki</option>
+                                </select>
+                            </div>
+                            <div class="manage-filter-group" id="manageOwnerFilterGroup" style="display: none;">
+                                <label for="manageOwnerFilter">Autor:</label>
+                                <select id="manageOwnerFilter" class="filter-select">
+                                    <option value="">Wszyscy</option>
+                                    <option value="base">Bazowe (bez autora)</option>
+                                    <option value="user">Dodane przez użytkowników</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Spell list -->
+                        <div class="manage-results-info">
+                            <p id="manageResultsCount">Ładowanie...</p>
+                        </div>
+                        <div id="manageSpellsList" class="manage-spells-list"></div>
                     </div>
                 </div>
 
-                <!-- Spell list -->
-                <div class="manage-results-info">
-                    <p id="manageResultsCount">Ładowanie...</p>
+                <!-- Details modal -->
+                <div id="detailsPanel" class="details-panel" style="display: none;">
+                    <div class="details-content">
+                        <button id="closeDetails" class="btn-close">✕</button>
+                        <div id="detailsBody"></div>
+                    </div>
                 </div>
-                <div id="manageSpellsList" class="manage-spells-list"></div>
-            </div>
+            </main>
         </div>
+    </div>
 
-        <!-- Details modal -->
-        <div id="detailsPanel" class="details-panel" style="display: none;">
-            <div class="details-content">
-                <button id="closeDetails" class="btn-close">✕</button>
-                <div id="detailsBody"></div>
-            </div>
+    <!-- Create Character Modal -->
+    <div id="createCharacterModal" class="modal">
+        <div class="modal-content">
+            <span id="closeCreateCharacterModal" class="close">&times;</span>
+            <h2>Nowy Kanciarz</h2>
+            <form id="createCharacterForm">
+                <div class="form-group">
+                    <label for="characterName">Imię kanciarza:</label>
+                    <input type="text" id="newCharacterName" placeholder="np. Szeryf Morgan" required>
+                </div>
+                <div class="form-group">
+                    <label for="characterImageUrl">URL obrazka (opcjonalnie):</label>
+                    <input type="text" id="newCharacterImageUrl" placeholder="https://...">
+                </div>
+                <button type="submit" class="submit-btn">Utwórz Kanciarza</button>
+                <div id="createCharacterError" class="error-message" style="display: none;"></div>
+                <div id="createCharacterSuccess" class="success-message" style="display: none;"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Character Name Modal -->
+    <div id="editCharacterNameModal" class="modal">
+        <div class="modal-content">
+            <span id="closeEditCharacterNameModal" class="close">&times;</span>
+            <h2>Zmień imię kanciarza</h2>
+            <form id="editCharacterNameForm">
+                <div class="form-group">
+                    <label for="editCharacterNameInput">Imię kanciarza:</label>
+                    <input type="text" id="editCharacterNameInput" required>
+                </div>
+                <button type="submit" class="submit-btn">Zapisz</button>
+                <div id="editCharacterNameError" class="error-message" style="display: none;"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Change Character Image Modal -->
+    <div id="changeCharacterImageModal" class="modal">
+        <div class="modal-content">
+            <span id="closeChangeCharacterImageModal" class="close">&times;</span>
+            <h2>Zmień portret kanciarza</h2>
+            <form id="changeCharacterImageForm">
+                <div class="form-group">
+                    <label for="editCharacterImageUrl">URL obrazka:</label>
+                    <input type="text" id="editCharacterImageUrl" placeholder="https://...">
+                </div>
+                <button type="submit" class="submit-btn">Zapisz</button>
+                <div id="changeCharacterImageError" class="error-message" style="display: none;"></div>
+            </form>
         </div>
     </div>
 
@@ -235,13 +342,13 @@
                 </div>
                 <div class="form-group">
                     <label for="spellbookReliability">Niezawodność: <span id="reliabilityValue">1</span></label>
-                    <input type="range" id="spellbookReliability" min="1" max="5" value="1" class="reliability-slider">
+                    <input type="range" id="spellbookReliability" min="1" max="20" value="1" class="reliability-slider">
                     <div class="reliability-labels">
                         <span>1</span>
-                        <span>2</span>
-                        <span>3</span>
-                        <span>4</span>
                         <span>5</span>
+                        <span>10</span>
+                        <span>15</span>
+                        <span>20</span>
                     </div>
                 </div>
                 <button type="submit" class="submit-btn">Utwórz Księgę</button>
@@ -259,13 +366,53 @@
                 <h2 id="spellbookDetailsTitle">Księga</h2>
                 <div class="spellbook-details-info">
                     <span class="spellbook-reliability">Niezawodność: <strong id="spellbookDetailsReliability">1</strong></span>
-                    <span class="spellbook-spell-count">Zaklęć: <strong id="spellbookDetailsCount">0</strong></span>
+                    <span class="spellbook-spell-count">Kantów: <strong id="spellbookDetailsCount">0</strong></span>
                 </div>
             </div>
-            <div id="spellbookDetailsSpells" class="spellbook-spells-list"></div>
+            
+            <div class="spellbook-tabs">
+                <button class="spellbook-tab-btn active" data-tab="current-spells">✅ W księdze</button>
+                <button class="spellbook-tab-btn" data-tab="missing-spells">❌ Brak w księdze</button>
+                <button class="spellbook-tab-btn" data-tab="available-spells">🔍 Nieznane</button>
+            </div>
+            
+            <div id="currentSpellsTab" class="spellbook-tab-content active">
+                <div id="spellbookDetailsSpells" class="spellbook-spells-list"></div>
+                <button id="addSpellToSpellbookBtn" class="btn-add-spell-to-book">➕ Dodaj kant do księgi</button>
+            </div>
+
+            <div id="missingSpellsTab" class="spellbook-tab-content">
+                <div id="spellbookMissingSpells" class="spellbook-spells-list"></div>
+                <button id="addMissingSpellBtn" class="btn-add-spell-to-book" style="border-color: #ff6b6b; color: #ff6b6b;">➕ Oznacz brakujący kant</button>
+            </div>
+            
+            <div id="availableSpellsTab" class="spellbook-tab-content">
+                <p style="color: var(--text-secondary); margin-bottom: 10px; font-size: 0.9em;">
+                    Kanty, których status w tej księdze nie jest jeszcze ustalony.
+                </p>
+                <div class="search-box" style="margin-bottom: 15px;">
+                    <input type="text" id="spellbookAvailableSearch" placeholder="🔍 Szukaj kanta..." class="search-input">
+                </div>
+                <div id="spellbookAvailableSpells" class="spellbook-available-list"></div>
+            </div>
+            
             <div class="spellbook-actions">
+                <button id="previewSpellbookBtn" class="btn-preview-export">📝 Podgląd/PDF</button>
                 <button id="deleteSpellbookBtn" class="btn-delete-spellbook">🗑️ Usuń Księgę</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Add Known Spell Modal -->
+    <div id="addKnownSpellModal" class="modal">
+        <div class="modal-content">
+            <span id="closeAddKnownSpellModal" class="close">&times;</span>
+            <h2>Dodaj znany kant</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 15px;">Wyszukaj i dodaj kant do listy znanych kantów kanciarza.</p>
+            <div class="search-box" style="margin-bottom: 15px;">
+                <input type="text" id="addKnownSpellSearch" placeholder="🔍 Szukaj kanta..." class="search-input">
+            </div>
+            <div id="addKnownSpellResults" class="add-known-spell-results"></div>
         </div>
     </div>
 
@@ -273,10 +420,24 @@
     <div id="addToSpellbookModal" class="modal">
         <div class="modal-content add-to-spellbook-content">
             <span id="closeAddToSpellbookModal" class="close">&times;</span>
-            <h2>Dodaj do księgi</h2>
+            <h2>Dodaj kant do księgi</h2>
             <p id="addToSpellbookSpellName" class="spell-name-display"></p>
             <div id="spellbookSelectionList" class="spellbook-selection-list"></div>
             <div id="addToSpellbookMessage" class="info-message" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Preview/Export Modal -->
+    <div id="previewExportModal" class="modal">
+        <div class="modal-content preview-export-content">
+            <div class="preview-export-header">
+                <h2 id="previewTitle">Podgląd</h2>
+                <div class="preview-export-actions">
+                    <button id="exportPDFBtn" class="btn-export-pdf">📄 Eksportuj do PDF</button>
+                    <span id="closePreviewExportModal" class="close">&times;</span>
+                </div>
+            </div>
+            <div id="previewContent" class="preview-content"></div>
         </div>
     </div>
 
@@ -292,12 +453,14 @@
                         <label for="newSpellType">Typ:</label>
                         <select id="newSpellType" required>
                             <option value="kant">Kant</option>
-                            <option value="sztuka">Sztuczka</option>
+                            <option value="sztuczka">Sztuczka</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="newSpellSource">Źródło:</label>
-                        <input type="text" id="newSpellSource" placeholder="np. HoE, Homebrew" required>
+                        <select id="newSpellSource" required>
+                            <option value="">Wybierz źródło</option>
+                        </select>
                     </div>
                 </div>
 
@@ -317,11 +480,26 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="newSpellAttribute">Cecha:</label>
-                        <input type="text" id="newSpellAttribute" placeholder="np. Wiedza, Duch">
+                        <select id="newSpellAttribute">
+                            <option value="">Wybierz cechę</option>
+                        </select>
                     </div>
                     <div class="form-group" id="minHandGroup">
                         <label for="newSpellMinHand">Min. Ręka:</label>
-                        <input type="text" id="newSpellMinHand" placeholder="np. Para">
+                        <select id="newSpellMinHand">
+                            <option value="">Brak wymagań</option>
+                            <option value="As">As</option>
+                            <option value="Para">Para</option>
+                            <option value="Para Figur">Para Figur</option>
+                            <option value="Dwie Pary">Dwie Pary</option>
+                            <option value="Trójka">Trójka</option>
+                            <option value="Strit">Strit</option>
+                            <option value="Kolor">Kolor</option>
+                            <option value="Ful">Ful</option>
+                            <option value="Kareta">Kareta</option>
+                            <option value="Poker">Poker</option>
+                            <option value="Królewski Poker">Królewski Poker</option>
+                        </select>
                     </div>
                 </div>
 
