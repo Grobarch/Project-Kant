@@ -162,29 +162,9 @@ const detailsPanel = document.getElementById('detailsPanel');
 const closeDetailsBtn = document.getElementById('closeDetails');
 const sidebarButtons = document.querySelectorAll('.sidebar-btn');
 const viewSections = document.querySelectorAll('.view-section');
-const activeViewLabel = document.getElementById('activeViewLabel');
-const activeViewDescription = document.getElementById('activeViewDescription');
-const statTotalSpells = document.getElementById('statTotalSpells');
-const statKants = document.getElementById('statKants');
-const statTricks = document.getElementById('statTricks');
-const statCharacters = document.getElementById('statCharacters');
 
 // Poker hand names
 const HAND_NAMES = ['As', 'Para', 'Para Figur', 'Dwie Pary', 'Trójka', 'Strit', 'Kolor', 'Ful', 'Kareta', 'Poker', 'Królewski Poker'];
-const VIEW_META = {
-    'card-view': {
-        label: 'Stół Karciany',
-        description: 'Przeglądaj pojedyncze karty kantów i szybko wyszukuj zaklęcia.'
-    },
-    'table-view': {
-        label: 'Rejestr Kantów',
-        description: 'Filtruj i porównuj kanty oraz sztuczki w widoku tabelarycznym.'
-    },
-    'manage-view': {
-        label: 'Biuro Szeryfa',
-        description: 'Zarządzaj postaciami, księgami i własnymi wpisami.'
-    }
-};
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
@@ -925,7 +905,6 @@ async function loadData() {
         console.log(`Pobrano ${data.length} zaklęć z bazy danych`);
         
         allSpells = data.map(mapDbSpellToLegacy);
-        refreshDashboardStats();
         
         const kantyCount = allSpells.filter(s => s.type === 'kant').length;
         const sztuCount = allSpells.filter(s => s.type === 'sztuczka').length;
@@ -1262,7 +1241,6 @@ function renderSpellDetails(spell) {
 // Update results count
 function updateResultsCount() {
     resultsCount.textContent = `Wyników: ${filteredSpells.length} / ${allSpells.length}`;
-    refreshDashboardStats();
 }
 
 // Reset filters
@@ -1475,36 +1453,6 @@ function switchView(viewName) {
             cardSearchInput.focus();
         }, 100);
     }
-
-    updateDashboardViewCopy(viewName);
-}
-
-function updateDashboardViewCopy(viewName) {
-    const view = VIEW_META[viewName] || VIEW_META['card-view'];
-    if (activeViewLabel) {
-        activeViewLabel.textContent = view.label;
-    }
-    if (activeViewDescription) {
-        activeViewDescription.textContent = view.description;
-    }
-}
-
-function refreshDashboardStats() {
-    const kantsCount = allSpells.filter(spell => spell.type === 'kant').length;
-    const tricksCount = allSpells.filter(spell => spell.type === 'sztuczka').length;
-
-    if (statTotalSpells) {
-        statTotalSpells.textContent = String(allSpells.length);
-    }
-    if (statKants) {
-        statKants.textContent = String(kantsCount);
-    }
-    if (statTricks) {
-        statTricks.textContent = String(tricksCount);
-    }
-    if (statCharacters) {
-        statCharacters.textContent = String(userCharacters.length);
-    }
 }
 
 function normalizeCharacterImageUrl(rawUrl) {
@@ -1543,7 +1491,6 @@ function normalizeCharacterImageUrl(rawUrl) {
 async function loadCharacters() {
     if (!currentUser) {
         userCharacters = [];
-        refreshDashboardStats();
         return;
     }
 
@@ -1554,7 +1501,6 @@ async function loadCharacters() {
     }
 
     userCharacters = data || [];
-    refreshDashboardStats();
     
     // Load actual spell and spellbook counts for each character
     for (const char of userCharacters) {
@@ -2689,7 +2635,6 @@ function updateAuthUI(user) {
         updateSpellbooksUI(); // Hide spellbooks panel when logged out
     }
     updateManagePanel();
-    refreshDashboardStats();
 }
 
 async function loadKnownSpells() {
