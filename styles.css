@@ -3445,12 +3445,12 @@ body.modernized-ui {
     }
 
     .modernized-ui .card-header {
-        grid-template-columns: 1fr;
-        gap: 8px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
     }
 
     .modernized-ui .card-corner-right {
-        text-align: left;
+        text-align: right;
     }
 }
 
