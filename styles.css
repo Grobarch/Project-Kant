@@ -3106,3 +3106,649 @@ header {
         padding: 10px;
     }
 }
+
+/* ===============================
+   Modernized Dashboard Overrides
+   =============================== */
+
+body.modernized-ui {
+    padding: 16px;
+    background:
+        radial-gradient(ellipse at top right, rgba(139, 115, 85, 0.2) 0%, transparent 55%),
+        radial-gradient(ellipse at bottom left, rgba(61, 40, 23, 0.35) 0%, transparent 55%),
+        linear-gradient(150deg, var(--primary-color) 0%, var(--secondary-color) 45%, var(--hover-bg) 100%);
+}
+
+.modernized-ui .container {
+    max-width: 1500px;
+}
+
+.modernized-ui header {
+    text-align: left;
+    padding: 18px 22px;
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    background: rgba(44, 24, 16, 0.58);
+    backdrop-filter: blur(8px);
+}
+
+.modernized-ui .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+}
+
+.modernized-ui header h1 {
+    margin-bottom: 4px;
+    font-size: clamp(1.6rem, 2.5vw, 2.4rem);
+}
+
+.modernized-ui header p {
+    color: var(--text-secondary);
+}
+
+.modernized-ui .main-layout {
+    align-items: stretch;
+    gap: 16px;
+    min-height: calc(100vh - 170px);
+}
+
+.modernized-ui .sidebar {
+    width: 252px;
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    background: rgba(44, 24, 16, 0.62);
+    backdrop-filter: blur(8px);
+    padding: 14px 0;
+}
+
+.modernized-ui .sidebar-btn {
+    margin: 0 10px;
+    border-radius: 10px;
+    border-left: none;
+}
+
+.modernized-ui .sidebar-btn.active {
+    border-left-color: transparent;
+    background: rgba(139, 115, 85, 0.3);
+}
+
+.modernized-ui .main-content {
+    background: rgba(44, 24, 16, 0.45);
+    border: 1px solid var(--border-color);
+    border-radius: 18px;
+    padding: 18px;
+    backdrop-filter: blur(6px);
+}
+
+.modernized-ui .dashboard-hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 16px;
+    margin-bottom: 18px;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 16px;
+    background: rgba(61, 40, 23, 0.45);
+}
+
+.modernized-ui .hero-copy {
+    max-width: 38rem;
+}
+
+.modernized-ui .hero-kicker {
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.modernized-ui #activeViewLabel {
+    font-size: clamp(1.2rem, 1.8vw, 1.8rem);
+    color: var(--accent-color);
+    margin-bottom: 8px;
+}
+
+.modernized-ui #activeViewDescription {
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.modernized-ui .hero-stats {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(110px, 1fr));
+    gap: 10px;
+}
+
+.modernized-ui .stat-card {
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 12px;
+    background: rgba(44, 24, 16, 0.58);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.modernized-ui .stat-label {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+}
+
+.modernized-ui .stat-value {
+    font-size: 1.5rem;
+    color: var(--accent-color);
+    line-height: 1.2;
+}
+
+.modernized-ui .stat-meta {
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+}
+
+.modernized-ui .view-section {
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 14px;
+    background: rgba(44, 24, 16, 0.34);
+}
+
+.modernized-ui .view-section + .view-section {
+    margin-top: 0;
+}
+
+.modernized-ui .search-input,
+.modernized-ui .filter-select,
+.modernized-ui input,
+.modernized-ui select,
+.modernized-ui textarea {
+    border-radius: 10px;
+}
+
+.modernized-ui .controls-panel,
+.modernized-ui .results-info,
+.modernized-ui .table-wrapper,
+.modernized-ui .character-management,
+.modernized-ui .character-section,
+.modernized-ui .admin-spell-management {
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    background: rgba(44, 24, 16, 0.5);
+}
+
+.modernized-ui .table-wrapper {
+    overflow: auto;
+}
+
+.modernized-ui .spells-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.modernized-ui .game-card {
+    border-radius: 18px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+}
+
+.modernized-ui .modal-content {
+    border-radius: 14px;
+    border: 1px solid var(--border-color);
+    background: rgba(44, 24, 16, 0.95);
+}
+
+.modernized-ui .btn-add-spell,
+.modernized-ui .submit-btn,
+.modernized-ui .btn-create-character,
+.modernized-ui .btn-create-spellbook,
+.modernized-ui .btn-reset,
+.modernized-ui .auth-btn {
+    border-radius: 10px;
+}
+
+@media (max-width: 1100px) {
+    .modernized-ui .dashboard-hero {
+        flex-direction: column;
+    }
+
+    .modernized-ui .hero-stats {
+        grid-template-columns: repeat(2, minmax(130px, 1fr));
+    }
+}
+
+@media (max-width: 860px) {
+    .modernized-ui .main-layout {
+        flex-direction: column;
+    }
+
+    .modernized-ui .sidebar {
+        width: 100%;
+        padding: 10px;
+    }
+
+    .modernized-ui .sidebar-nav {
+        flex-direction: row;
+        gap: 8px;
+    }
+
+    .modernized-ui .sidebar-btn {
+        flex: 1;
+        justify-content: center;
+        padding: 12px 10px;
+        margin: 0;
+    }
+
+    .modernized-ui .sidebar-label {
+        display: none;
+    }
+
+    .modernized-ui .sidebar-footer {
+        padding: 10px 0 0;
+    }
+}
+
+.modernized-ui .card-display-container {
+    margin-top: 12px;
+}
+
+.modernized-ui .game-card {
+    width: min(100%, 860px);
+    max-width: 860px;
+    aspect-ratio: auto;
+    min-height: 560px;
+    border-radius: 22px;
+    border: 1px solid var(--border-color);
+    background:
+        radial-gradient(circle at 92% 10%, rgba(218, 165, 32, 0.12) 0%, transparent 28%),
+        linear-gradient(155deg, rgba(62, 39, 35, 0.88) 0%, rgba(44, 24, 16, 0.92) 100%);
+    padding: 24px;
+    gap: 18px;
+    box-shadow:
+        0 18px 36px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.modernized-ui .game-card::before {
+    background: radial-gradient(circle, rgba(212, 165, 116, 0.08) 0%, transparent 72%);
+}
+
+.modernized-ui .card-header {
+    border-bottom: 1px solid rgba(139, 69, 19, 0.45);
+    padding-bottom: 12px;
+}
+
+.modernized-ui .card-corner-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+}
+
+.modernized-ui .card-corner-value {
+    margin-top: 2px;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+
+.modernized-ui .card-title {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.modernized-ui .card-name-pl {
+    font-size: clamp(1.45rem, 2.4vw, 2rem);
+    margin-bottom: 0;
+}
+
+.modernized-ui .card-name-en {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.modernized-ui .card-stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    border-top: none;
+    border-bottom: none;
+    padding: 0;
+}
+
+.modernized-ui .card-stat {
+    border: 1px solid rgba(139, 69, 19, 0.45);
+    border-radius: 10px;
+    padding: 10px 8px;
+    background: rgba(44, 24, 16, 0.45);
+}
+
+.modernized-ui .card-stat-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+}
+
+.modernized-ui .card-stat-value {
+    margin-top: 2px;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.modernized-ui .card-description {
+    flex: 1;
+    border: 1px solid rgba(139, 69, 19, 0.45);
+    border-radius: 12px;
+    background: rgba(44, 24, 16, 0.5);
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow: hidden;
+}
+
+.modernized-ui .card-description-title {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--accent-color);
+}
+
+.modernized-ui .card-description-body {
+    color: var(--text-primary);
+    line-height: 1.6;
+    font-size: 0.96rem;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.modernized-ui .card-description-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modernized-ui .card-description-body::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
+    border-radius: 999px;
+}
+
+.modernized-ui .card-footer {
+    margin-top: 0;
+}
+
+.modernized-ui .card-footer-actions {
+    gap: 10px;
+}
+
+.modernized-ui .card-footer .btn-show-effects,
+.modernized-ui .card-footer .btn-edit-spell {
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 0.86rem;
+    transform: translateY(0);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.modernized-ui .card-footer .btn-show-effects:hover,
+.modernized-ui .card-footer .btn-edit-spell:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+}
+
+.modernized-ui .card-type-badge {
+    border-radius: 999px;
+    padding: 7px 13px;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+}
+
+@media (max-width: 960px) {
+    .modernized-ui .game-card {
+        min-height: 520px;
+        padding: 18px;
+    }
+
+    .modernized-ui .card-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .modernized-ui .game-card {
+        min-height: 500px;
+        border-radius: 16px;
+    }
+
+    .modernized-ui .card-header {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .modernized-ui .card-corner-right {
+        text-align: left;
+    }
+}
+
+.modernized-ui .details-panel {
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+}
+
+.modernized-ui .details-content {
+    width: min(920px, calc(100vw - 32px));
+    max-height: 88vh;
+    border: 1px solid var(--border-color);
+    border-radius: 18px;
+    padding: 22px;
+    background:
+        radial-gradient(circle at 90% 8%, rgba(218, 165, 32, 0.09) 0%, transparent 35%),
+        linear-gradient(155deg, rgba(62, 39, 35, 0.92) 0%, rgba(44, 24, 16, 0.95) 100%);
+    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.45);
+}
+
+.modernized-ui #detailsBody {
+    padding-right: 4px;
+}
+
+.modernized-ui #detailsBody .effects-title {
+    font-size: 1rem;
+    letter-spacing: 0.08em;
+    margin-bottom: 14px;
+    padding-right: 40px;
+}
+
+.modernized-ui #detailsBody .effects-table {
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: rgba(44, 24, 16, 0.5);
+    overflow: hidden;
+}
+
+.modernized-ui #detailsBody .effects-table th {
+    background: rgba(44, 24, 16, 0.8);
+    padding: 11px 12px;
+    letter-spacing: 0.08em;
+    font-size: 0.74rem;
+}
+
+.modernized-ui #detailsBody .effects-table td {
+    padding: 11px 12px;
+    vertical-align: top;
+    line-height: 1.45;
+}
+
+.modernized-ui #detailsBody .effects-table tbody tr {
+    background: rgba(62, 39, 35, 0.28);
+}
+
+.modernized-ui #detailsBody .effects-table tbody tr:nth-child(even) {
+    background: rgba(44, 24, 16, 0.3);
+}
+
+.modernized-ui #detailsBody .effects-table tbody tr:hover {
+    background: rgba(93, 64, 55, 0.45);
+}
+
+.modernized-ui #detailsBody .hand-label {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    padding: 3px 10px;
+    background: rgba(44, 24, 16, 0.4);
+    font-size: 0.8rem;
+    letter-spacing: 0.02em;
+}
+
+.modernized-ui .btn-close {
+    top: 12px;
+    right: 12px;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    background: rgba(62, 39, 35, 0.9);
+    color: var(--accent-color);
+}
+
+.modernized-ui .btn-close:hover {
+    background: rgba(93, 64, 55, 0.95);
+    transform: scale(1.04);
+}
+
+@media (max-width: 640px) {
+    .modernized-ui .details-content {
+        width: calc(100vw - 20px);
+        padding: 16px;
+        border-radius: 14px;
+    }
+
+    .modernized-ui #detailsBody .effects-title {
+        font-size: 0.9rem;
+        padding-right: 30px;
+    }
+
+    .modernized-ui #detailsBody .effects-table {
+        font-size: 0.82rem;
+    }
+}
+
+/* Rejestr Kantów - details panel consistency */
+.modernized-ui .details-row.visible {
+    background: rgba(44, 24, 16, 0.42);
+}
+
+.modernized-ui .details-row td {
+    padding: 16px 18px;
+    border-top: 1px solid var(--border-color);
+}
+
+.modernized-ui .details-cell {
+    border: 1px solid rgba(139, 69, 19, 0.4);
+    border-radius: 12px;
+    background: rgba(44, 24, 16, 0.45);
+    padding: 12px;
+}
+
+.modernized-ui .spell-detail-header {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.modernized-ui .detail-item {
+    border-left: none;
+    border: 1px solid rgba(139, 69, 19, 0.42);
+    border-radius: 10px;
+    background: rgba(62, 39, 35, 0.38);
+    padding: 10px 11px;
+}
+
+.modernized-ui .detail-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+}
+
+.modernized-ui .detail-value {
+    font-size: 0.92rem;
+    line-height: 1.55;
+}
+
+.modernized-ui .effects-section {
+    margin-top: 12px;
+    border: 1px solid rgba(139, 69, 19, 0.35);
+    border-radius: 10px;
+    background: rgba(44, 24, 16, 0.36);
+    padding: 10px;
+}
+
+.modernized-ui .effects-section .effects-title {
+    font-size: 0.88rem;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+    padding-right: 0;
+}
+
+.modernized-ui .effects-section .effects-table {
+    border: 1px solid rgba(139, 69, 19, 0.34);
+    border-radius: 9px;
+    background: rgba(44, 24, 16, 0.44);
+}
+
+.modernized-ui .effects-section .effects-table th {
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    padding: 8px 10px;
+}
+
+.modernized-ui .effects-section .effects-table td {
+    padding: 8px 10px;
+    font-size: 0.87rem;
+}
+
+.modernized-ui .effects-section .hand-label {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid rgba(139, 69, 19, 0.5);
+    border-radius: 999px;
+    padding: 2px 8px;
+    background: rgba(44, 24, 16, 0.42);
+    font-size: 0.75rem;
+}
+
+.modernized-ui .spell-detail-actions {
+    margin-top: 10px;
+    gap: 8px;
+}
+
+.modernized-ui .btn-action {
+    border-radius: 9px;
+    padding: 8px 11px;
+    font-size: 0.8rem;
+    border-color: var(--border-color);
+    background: rgba(44, 24, 16, 0.62);
+}
+
+.modernized-ui .btn-action:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.modernized-ui .btn-delete-own-spell {
+    border-color: var(--red-accent);
+}
+
+@media (max-width: 768px) {
+    .modernized-ui .details-row td {
+        padding: 10px;
+    }
+
+    .modernized-ui .details-cell {
+        padding: 9px;
+    }
+
+    .modernized-ui .spell-detail-header {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+}

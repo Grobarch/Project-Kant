@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Project Kant 2.0</title>
     <link rel="icon" type="image/x-icon" href="/Project-Kant/assets/star-CZKp49Zm.ico">
-  <script type="module" crossorigin src="/Project-Kant/assets/index-CflK2FH_.js"></script>
-  <link rel="stylesheet" crossorigin href="/Project-Kant/assets/index-ajUo03q7.css">
+  <script type="module" crossorigin src="/Project-Kant/assets/index-BKLhyg8A.js"></script>
+  <link rel="stylesheet" crossorigin href="/Project-Kant/assets/index-DhLEa2rT.css">
 </head>
-<body>
+<body class="modernized-ui">
     <div class="container">
         <!-- Nagłówek -->
         <header>
@@ -55,6 +55,35 @@
 
             <!-- Main Content Area -->
             <main class="main-content">
+                <section class="dashboard-hero" aria-label="Panel główny">
+                    <div class="hero-copy">
+                        <p class="hero-kicker">Project Kant</p>
+                        <h2 id="activeViewLabel">Stół Karciany</h2>
+                        <p id="activeViewDescription">Przeglądaj pojedyncze karty kantów i szybko wyszukuj zaklęcia.</p>
+                    </div>
+                    <div class="hero-stats" aria-label="Statystyki">
+                        <article class="stat-card">
+                            <span class="stat-label">Łącznie</span>
+                            <strong id="statTotalSpells" class="stat-value">0</strong>
+                            <small class="stat-meta">wszystkie wpisy</small>
+                        </article>
+                        <article class="stat-card">
+                            <span class="stat-label">Kanty</span>
+                            <strong id="statKants" class="stat-value">0</strong>
+                            <small class="stat-meta">aktywna baza</small>
+                        </article>
+                        <article class="stat-card">
+                            <span class="stat-label">Sztuczki</span>
+                            <strong id="statTricks" class="stat-value">0</strong>
+                            <small class="stat-meta">aktywna baza</small>
+                        </article>
+                        <article class="stat-card">
+                            <span class="stat-label">Moje postacie</span>
+                            <strong id="statCharacters" class="stat-value">0</strong>
+                            <small class="stat-meta">po zalogowaniu</small>
+                        </article>
+                    </div>
+                </section>
 
                 <!-- Widok Karciany -->
                 <div id="card-view" class="view-section active">

@@ -1,118 +1,193 @@
 # Project Kant 2.0 🤠
 
-Księga charakterów i kantów (zaklęć) dla gry RPG w stylu Deadlands.
+Aplikacja webowa do zarządzania kantami i postaciami w klimacie Deadlands.
 
-## Struktura
+## Widoki
 
-- **Stół Karciany** 🃏 - Widok kartkowy postaci z ich statystykami
-- **Rejestr Kantów** 📕 - Tabela wszystkich dostępnych zaklęć
-- **Biuro Szeryfa** 🔧 - Panel zarządzania dla administratorów i własnych kandłów
+- **Stół Karciany** 🃏 — karta pojedynczego kanta/sztuczki
+- **Rejestr Kantów** 📕 — tabela z filtrowaniem i szczegółami
+- **Biuro Szeryfa** 🔧 — zarządzanie postaciami, znanymi kantami i księgami
 
 ## Wymagania
 
-- Node.js 16+
-- Konto [Supabase](https://supabase.com) (darmowe)
+- Node.js 18+
+- konto [Supabase](https://supabase.com)
+- repozytorium na GitHub (do publikacji na GitHub Pages)
 
-## Instalacja
+## Uruchomienie lokalne
 
-1. **Klonuj projekt:**
-   ```bash
-   git clone https://github.com/Grobarch/Project-Kant.git
-   cd Project\ Kant
-   ```
+1. **Sklonuj repozytorium**
 
-2. **Zainstaluj zależności:**
-   ```bash
-   npm install
-   ```
+    ```bash
+    git clone https://github.com/Grobarch/Project-Kant.git
+    cd Project-Kant
+    ```
 
-3. **Skonfiguruj Supabase:**
-   - Skopiuj `.env.example` na `.env.local`:
-     ```bash
-     cp .env.example .env.local
-     ```
-   - Otwórz `.env.local` i wstaw swoje klucze z [Supabase Dashboard](https://supabase.com/dashboard):
-     - `VITE_SUPABASE_URL` - URL Twojego projektu Supabase
-     - `VITE_SUPABASE_ANON_KEY` - Publiczny klucz "anon"
+2. **Zainstaluj zależności**
 
-4. **Uruchom serwer deweloperski:**
-   ```bash
-   npm run dev
-   ```
-   Aplikacja otworzy się w przeglądarce na `http://localhost:8000`
+    ```bash
+    npm install
+    ```
 
-## Build
+3. **Skonfiguruj zmienne środowiskowe**
 
-Aby zbudować wersję produkcyjną:
+    ```bash
+    cp .env.example .env.local
+    ```
+
+    Uzupełnij `.env.local` wartościami z Supabase Dashboard:
+    - `VITE_SUPABASE_URL`
+    - `VITE_SUPABASE_ANON_KEY`
+
+4. **Uruchom dev server**
+
+    ```bash
+    npm run dev
+    ```
+
+    Domyślnie: `http://localhost:8000`.
+
+## Konfiguracja bazy (Supabase)
+
+1. W Supabase utwórz projekt i włącz Email/Password w Auth.
+2. Utwórz wymagane tabele (`profiles`, `characters`, `spells`, `known_spells`, `spellbooks` i tabele powiązane).
+3. Wykonaj skrypty SQL z repozytorium w Supabase SQL Editor (pliki `fix-*.sql` i inne skrypty korekcyjne).
+4. Zweryfikuj RLS dla `spells` oraz tabel użytkownika (owner/admin).
+
+> W repozytorium znajdują się skrypty naprawcze (np. polityki RLS). Traktuj je jako migracje korekcyjne do istniejącej struktury.
+
+## Build produkcyjny
+
 ```bash
 npm run build
 ```
 
-Pliki wyjściowe pojawią się w folderze `dist/`.
+Wynik trafia do folderu `dist/`.
 
-## Deployment na GitHub Pages
+Podgląd builda lokalnie:
 
-1. Push kod do GitHub:
+```bash
+npm run preview
+```
+
+## Jak wdrożyć projekt samodzielnie (GitHub Pages)
+
+### 1) Przygotuj repo
+
+- Wypchnij kod na gałąź główną:
+
    ```bash
    git add .
-   git commit -m "Deploy setup"
-   git push origin backend
+   git commit -m "Prepare production deploy"
+   git push origin main
    ```
 
-2. W ustawieniach repozytorium (Settings → Pages):
-   - Source: **GitHub Actions**
+### 2) Sprawdź `base` w Vite
 
-3. Workflow `.github/workflows/deploy-pages.yml` automatycznie zbuduje `dist/` i wdroży aplikację.
+W pliku `vite.config.js` ustaw `base` zgodnie z nazwą repo:
 
-## Funkcje
+- dla repo `Project-Kant`: `base: '/Project-Kant/'`
+- dla innej nazwy repo: `base: '/NAZWA-REPO/'`
 
-### Zarządzanie postaciami
-- ✅ Tworzenie nowych postaci (Kanciarzy)
-- ✅ Edycja imienia i zdjęcia
-- ✅ Usuwanie postaci z potwierdzeniem
-- ✅ Przegląd znanych kantów i ksiąg zaklęć
+### 3) Dodaj workflow GitHub Actions
 
-### Zarządzanie kantami (zaklęciami)
-- ✅ Dodawanie nowych kantów (admin + użytkownicy)
-- ✅ Edycja własnych kantów
-- ✅ Usuwanie własnych kantów
-- ✅ Przypisywanie kantów do charakterów
-- ✅ Tworzenie osobistych ksiąg zaklęć
+Utwórz plik `.github/workflows/deploy-pages.yml`:
 
-### Bezpieczeństwo
-- ✅ Autentykacja przez email/hasło
-- ✅ Row Level Security (RLS) w bazie danych
-- ✅ Użytkownicy mogą zarządzać tylko swoimi resources
-- ✅ Role administratora dla zarządzania systemem
+```yml
+name: Deploy to GitHub Pages
 
-## Struktura bazy danych
+on:
+   push:
+      branches: [main]
+   workflow_dispatch:
 
-Projekt używa Supabase PostgreSQL z następującymi tabelami:
+permissions:
+   contents: read
+   pages: write
+   id-token: write
 
-- **auth.users** - Użytkownicy Supabase
-- **profiles** - Profile użytkowników + flaga is_admin
-- **characters** - Postaci graczy
-- **spells** - Dostępne kanty (zaklęcia)
-- **known_spells** - Kanty przypisane do postaci
-- **spellbooks** - Osobiste księgi zaklęć
+concurrency:
+   group: pages
+   cancel-in-progress: true
 
-Wszystkie tabele chronione są politykami RLS.
+jobs:
+   build:
+      runs-on: ubuntu-latest
+      steps:
+         - name: Checkout
+            uses: actions/checkout@v4
+
+         - name: Setup Node
+            uses: actions/setup-node@v4
+            with:
+               node-version: 20
+               cache: npm
+
+         - name: Install
+            run: npm ci
+
+         - name: Build
+            run: npm run build
+            env:
+               VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+               VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+         - name: Upload artifact
+            uses: actions/upload-pages-artifact@v3
+            with:
+               path: dist
+
+   deploy:
+      environment:
+         name: github-pages
+         url: ${{ steps.deployment.outputs.page_url }}
+      runs-on: ubuntu-latest
+      needs: build
+      steps:
+         - name: Deploy
+            id: deployment
+            uses: actions/deploy-pages@v4
+```
+
+### 4) Ustaw sekrety repozytorium
+
+W GitHub: `Settings` → `Secrets and variables` → `Actions`:
+
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+
+### 5) Włącz Pages
+
+W GitHub: `Settings` → `Pages`:
+
+- **Source**: `GitHub Actions`
+
+Po pushu do `main` deployment wykona się automatycznie.
+
+## Smoke test po wdrożeniu
+
+- otwiera się aplikacja i ładuje lista kantów,
+- działają filtry i wyszukiwarka,
+- działa logowanie i wylogowanie,
+- działa widok kart i modal efektów,
+- panel zarządzania działa zgodnie z rolą użytkownika,
+- operacje CRUD respektują RLS (owner/admin).
 
 ## Technologia
 
-- **Frontend:** HTML5 + CSS3 + Vanilla JavaScript
-- **Build:** Vite + esbuild
-- **Backend:** Supabase (PostgreSQL + Auth + RLS)
-- **Hosting:** GitHub Pages
+- Frontend: HTML5 + CSS3 + Vanilla JavaScript
+- Build: Vite
+- Backend: Supabase (PostgreSQL + Auth + RLS)
+- Hosting: GitHub Pages
+
+## Release notes
+
+Szczegóły ostatnich zmian znajdziesz w [CHANGELOG.md](CHANGELOG.md).
+
+## Bezpieczeństwo
+
+Nie commituj `.env.local` ani tajnych kluczy. W pipeline używaj wyłącznie GitHub Secrets.
 
 ## Licencja
 
 ISC
-
-## Autor
-
-Grobarch
-
----
-
-**Uwaga:** Klucze Supabase są przechowywane w `.env.local`, która jest ignorowana przez Git. Nigdy nie commituj pliku `.env.local` - będzie zablokowany przez `.gitignore`.
