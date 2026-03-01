@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = 'https://ecdrspsbtwddlxnbymkj.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVjZHJzcHNidHdkZGx4bmJ5bWtqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyOTA2OTIsImV4cCI6MjA4Nzg2NjY5Mn0.kCdKsZlx9HIOdzPLoFWhrTbUO9io3P80XbnG85lORK8';
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://ecdrspsbtwddlxnbymkj.supabase.co';
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVjZHJzcHNidHdkZGx4bmJ5bWtqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyOTA2OTIsImV4cCI6MjA4Nzg2NjY5Mn0.kCdKsZlx9HIOdzPLoFWhrTbUO9io3P80XbnG85lORK8';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -150,21 +150,7 @@ export async function getSpellbooks(userId) {
     return { data, error };
 }
 
-export async function createSpellbook(userId, name, reliability = 1) {
-    const { data, error } = await supabase
-        .from('spellbooks')
-        .insert([
-            {
-                user_id: userId,
-                name,
-                reliability,
-            },
-        ])
-        .select();
-    return { data, error };
-}
-
-export async function addSpellToSpellbook(spellbookId, spellNamePl, spellNameEn) {
+export async function addSpellToSpellbook(spellbookId, spellNamePl, spellNameEn, status = 'present') {
     const { data, error } = await supabase
         .from('spellbook_spells')
         .insert([
@@ -172,19 +158,42 @@ export async function addSpellToSpellbook(spellbookId, spellNamePl, spellNameEn)
                 spellbook_id: spellbookId,
                 spell_name_pl: spellNamePl,
                 spell_name_en: spellNameEn,
+                status: status,
             },
         ])
         .select();
     return { data, error };
 }
 
-export async function getSpellbookSpells(spellbookId) {
-    const { data, error } = await supabase
+export async function getSpellbookSpells(spellbookId, status = null) {
+    let query = supabase
         .from('spellbook_spells')
         .select('*')
-        .eq('spellbook_id', spellbookId)
-        .order('created_at', { ascending: false });
+        .eq('spellbook_id', spellbookId);
+    
+    if (status) {
+        query = query.eq('status', status);
+    }
+    
+    query = query.order('created_at', { ascending: false });
+    const { data, error } = await query;
     return { data, error };
+}
+
+export async function removeSpellFromSpellbook(spellbookSpellId) {
+    const { error } = await supabase
+        .from('spellbook_spells')
+        .delete()
+        .eq('id', spellbookSpellId);
+    return { error };
+}
+
+export async function deleteSpellbook(spellbookId) {
+    const { error } = await supabase
+        .from('spellbooks')
+        .delete()
+        .eq('id', spellbookId);
+    return { error };
 }
 
 // Custom spells functions
@@ -253,5 +262,110 @@ export async function getProfile(userId) {
         .select('*')
         .eq('id', userId)
         .single();
+    return { data, error };
+}
+
+// Characters functions
+export async function getCharacters(userId) {
+    const { data, error } = await supabase
+        .from('characters')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+    return { data, error };
+}
+
+export async function createCharacter(userId, name, imageUrl = null) {
+    const { data, error } = await supabase
+        .from('characters')
+        .insert([
+            {
+                user_id: userId,
+                name,
+                image_url: imageUrl,
+            },
+        ])
+        .select();
+    return { data, error };
+}
+
+export async function updateCharacter(characterId, updates) {
+    const { data, error } = await supabase
+        .from('characters')
+        .update(updates)
+        .eq('id', characterId)
+        .select();
+    return { data, error };
+}
+
+export async function deleteCharacter(characterId) {
+    const { error } = await supabase
+        .from('characters')
+        .delete()
+        .eq('id', characterId);
+    return { error };
+}
+
+// Updated Known spells functions (now per character)
+export async function getKnownSpellsForCharacter(characterId) {
+    console.log('[Supabase] getKnownSpellsForCharacter called for character:', characterId);
+    try {
+        const { data, error } = await supabase
+            .from('known_spells')
+            .select('*')
+            .eq('character_id', characterId)
+            .order('sort_order', { ascending: true })
+            .order('created_at', { ascending: true });
+        console.log('[Supabase] getKnownSpellsForCharacter response - data count:', data?.length, 'error:', error?.message);
+        return { data, error };
+    } catch (err) {
+        console.error('[Supabase] getKnownSpellsForCharacter exception:', err);
+        return { data: null, error: err };
+    }
+}
+
+export async function addKnownSpellToCharacter(characterId, spellNamePl, spellNameEn) {
+    const { data, error } = await supabase
+        .from('known_spells')
+        .insert([
+            {
+                character_id: characterId,
+                spell_name_pl: spellNamePl,
+                spell_name_en: spellNameEn,
+            },
+        ])
+        .select();
+    return { data, error };
+}
+
+export async function updateKnownSpellOrder(spellId, sortOrder) {
+    const { error } = await supabase
+        .from('known_spells')
+        .update({ sort_order: sortOrder })
+        .eq('id', spellId);
+    return { error };
+}
+
+// Updated Spellbooks functions (now per character)
+export async function getSpellbooksForCharacter(characterId) {
+    const { data, error } = await supabase
+        .from('spellbooks')
+        .select('*')
+        .eq('character_id', characterId)
+        .order('created_at', { ascending: false });
+    return { data, error };
+}
+
+export async function createSpellbookForCharacter(characterId, name, reliability = 1) {
+    const { data, error } = await supabase
+        .from('spellbooks')
+        .insert([
+            {
+                character_id: characterId,
+                name,
+                reliability,
+            },
+        ])
+        .select();
     return { data, error };
 }
